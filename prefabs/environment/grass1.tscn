@@ -1,0 +1,55 @@
+[gd_scene format=4 uid="uid://dc3iuddf3mxyu"]
+
+[ext_resource type="Script" uid="uid://cd3mpx1kjlyun" path="res://scripts/environment/grass.gd" id="1_grass_script"]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_pfo41"]
+_data = PackedByteArray("AAADAAUAAAABAAAAQAAAACAAAABeAAAAUklGRlYAAABXRUJQVlA4TEoAAAAvP8AHEA8wabM0L/Mf8FAUSVIzVXyTlROA+AxPrGAiK4jo/wTwXoDwmabtiKDoO2EGRcZt5Ak5qBVZIE92PGS/MzQMvaM16K3vAQ==")
+size_override = Vector2(64, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fhntt"]
+atlas = SubResource("PortableCompressedTexture2D_pfo41")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_if2d6"]
+atlas = SubResource("PortableCompressedTexture2D_pfo41")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_iv187"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fhntt")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_if2d6")
+}],
+"loop": true,
+"name": &"default",
+"speed": 2.0
+}]
+
+[node name="Grass1" type="AnimatedSprite2D" unique_id=1886422459]
+texture_filter = 1
+sprite_frames = SubResource("SpriteFrames_iv187")
+script = ExtResource("1_grass_script")
+metadata/_aseprite_wizard_interface_config_ = {
+"animation_section": false,
+"layer_section": false,
+"output_section": false,
+"pending_changes": {},
+"slice_section": false
+}
+metadata/_aseprite_wizard_config_ = {
+"embed_tex": true,
+"layers": [],
+"o_ex_p": "",
+"o_folder": "",
+"o_name": "",
+"only_visible": false,
+"scale": "1.0",
+"should_round_fps": true,
+"slice": "",
+"source": "res://assets/sprites/environment/grass1.aseprite",
+"source_uid": 2359272718726984120
+}
+metadata/_aseprite_wizard_source_file_hash_ = "ecb744530bbb5040ca516cb98507f445"
