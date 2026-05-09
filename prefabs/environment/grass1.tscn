@@ -29,7 +29,8 @@ animations = [{
 }]
 
 [node name="Grass1" type="AnimatedSprite2D" unique_id=1886422459]
-texture_filter = 1
+auto_translate_mode = 2
+texture_filter = 3
 sprite_frames = SubResource("SpriteFrames_iv187")
 script = ExtResource("1_grass_script")
 metadata/_aseprite_wizard_interface_config_ = {

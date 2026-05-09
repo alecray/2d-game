@@ -1,3 +1,4 @@
+## Enemy character with random movement and direction changes
 extends CharacterBody2D
 
 const SPEED = 100.0
@@ -9,6 +10,7 @@ var time_until_change = 0.0
 func _ready() -> void:
 	time_until_change = randf_range(0.5, CHANGE_DIRECTION_TIME)
 	pick_random_direction()
+	$AnimatedSprite2D_Enemy1.play()
 
 func _physics_process(delta: float) -> void:
 	time_until_change -= delta
@@ -20,9 +22,10 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 	if direction.x != 0:
-		$Sprite2D_Enemy1.flip_h = direction.x < 0
+		$AnimatedSprite2D_Enemy1.flip_h = direction.x < 0
 
 
+## Pick a random direction and reset timer for next direction change
 func pick_random_direction() -> void:
 	var random_angle = randf() * TAU
 	direction = Vector2.from_angle(random_angle)
