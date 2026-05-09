@@ -1,0 +1,14 @@
+[remap]
+
+importer="aseprite_wizard.plugin.noop"
+type="PackedDataContainer"
+uid="uid://bketipych7qqv"
+path="res://.godot/imported/background-1.aseprite-27a4a9fe510e6f8f47e8aa9992f85489.res"
+
+[deps]
+
+source_file="res://assets/sprites/backgrounds/background-1.aseprite"
+dest_files=["res://.godot/imported/background-1.aseprite-27a4a9fe510e6f8f47e8aa9992f85489.res"]
+
+[params]
+
