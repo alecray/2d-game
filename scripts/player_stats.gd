@@ -13,26 +13,32 @@ const STAT_DEFS = {
 }
 
 ## Gun definitions — edit stats here. Applied on top of persistent upgrades each run.
+## DPS = (damage_mult * 5) * bullet_count / max(0.05, fire_rate_mult * 0.1)
 const GUN_DEFS = {
 	"gun1": {
-		"name": "GUN 1",  "desc": "Balanced starter\nrifle",          "cost": 0,   "sprite": "res://assets/sprites/weapons/gun1.png",
-		"fire_rate_mult": 1.0, "damage_mult": 1.0, "bullet_count": 1, "speed_mult": 1.0,  "bounces": 0, "color": Color.WHITE,
+		"name": "Tiny Jim",       "desc": "Lil' starter blaster",       "cost": 0,   "sprite": "res://assets/sprites/weapons/gun1.png",
+		"fire_rate_mult": 1.0,  "damage_mult": 1.0,  "bullet_count": 1, "speed_mult": 1.0,  "bullet_size": 1.0,  "bounces": 0, "color": Color.WHITE,
+		# DPS ≈ 50
 	},
 	"gun2": {
-		"name": "GUN 2",  "desc": "High fire rate,\nlow damage",       "cost": 50,  "sprite": "res://assets/sprites/weapons/gun2.png",
-		"fire_rate_mult": 0.5, "damage_mult": 0.6, "bullet_count": 1, "speed_mult": 1.1,  "bounces": 0, "color": Color(0.4, 0.9, 1.0),
+		"name": "Clanker-er",     "desc": "High fire rate,\nlow damage",  "cost": 25,  "sprite": "res://assets/sprites/weapons/gun2.png",
+		"fire_rate_mult": 0.45, "damage_mult": 0.65, "bullet_count": 1, "speed_mult": 1.3,  "bullet_size": 0.7,  "bounces": 0, "color": Color(0, 0.9, 1.0),
+		# fire_rate hits 0.05s cap → DPS ≈ 65
 	},
 	"gun3": {
-		"name": "GUN 3",  "desc": "Slow but hits\nextremely hard",     "cost": 75,  "sprite": "res://assets/sprites/weapons/gun3.png",
-		"fire_rate_mult": 2.5, "damage_mult": 3.0, "bullet_count": 1, "speed_mult": 1.4,  "bounces": 0, "color": Color(1.0, 0.75, 0.2),
+		"name": "Chicken Burger", "desc": "Slow but hits\nextremely hard","cost": 75,  "sprite": "res://assets/sprites/weapons/gun3.png",
+		"fire_rate_mult": 2.5,  "damage_mult": 4.5,  "bullet_count": 1, "speed_mult": 0.3,  "bullet_size": 3.0,  "bounces": 0, "color": Color(1.0, 0.75, 0),
+		# DPS ≈ 90
 	},
 	"gun4": {
-		"name": "GUN 4",  "desc": "3-bullet spread,\nshort range",     "cost": 60,  "sprite": "res://assets/sprites/weapons/gun4.png",
-		"fire_rate_mult": 1.6, "damage_mult": 0.8, "bullet_count": 3, "speed_mult": 0.9,  "bounces": 0, "color": Color.WHITE,
+		"name": "Angler Jaw",     "desc": "3-bullet spread,\nshort range","cost": 150, "sprite": "res://assets/sprites/weapons/gun4.png",
+		"fire_rate_mult": 1.2,  "damage_mult": 1.0,  "bullet_count": 3, "speed_mult": 0.8,  "bullet_size": 0.9,  "bounces": 0, "color": Color(0.1, 0.9, 0.1),
+		# DPS ≈ 125
 	},
 	"gun5": {
-		"name": "GIGA CHONGO",  "desc": "Massive laser\nbeam",               "cost": 100, "sprite": "res://assets/sprites/weapons/gun5.png",
-		"fire_rate_mult": 1.3, "damage_mult": 2.0, "bullet_count": 1, "speed_mult": 1.0,  "bounces": 0, "color": Color(0.8, 0.3, 1.0),
+		"name": "GIGA CHONGO",    "desc": "Massive laser\nbeam",          "cost": 500, "sprite": "res://assets/sprites/weapons/gun5.png",
+		"fire_rate_mult": 1.0,  "damage_mult": 5.0,  "bullet_count": 1, "speed_mult": 1.0,  "bullet_size": 1.0,  "bounces": 0, "color": Color(1, 1, 0),
+		# 25 DPS per enemy simultaneously in AoE
 		"shoot_mode": "laser",
 	},
 }
@@ -42,6 +48,7 @@ var coins: int = 0
 var owned_guns: Array = []  # purchased gun IDs; pistol is always available without being listed
 var equipped_gun: String = "gun1"
 var levels: Dictionary = {}
+var difficulty: int = 1  # 1-100, persisted between runs
 
 func _ready() -> void:
 	for key in STAT_DEFS:
@@ -75,6 +82,29 @@ func equip_gun(id: String) -> void:
 	if owns_gun(id):
 		equipped_gun = id
 		_save()
+
+func set_difficulty(d: int) -> void:
+	difficulty = clampi(d, 1, 100)
+	_save()
+
+# --- difficulty scaling (logarithmic: t=0 at difficulty 1, t=1 at difficulty 100) ---
+
+func diff_scale() -> float:
+	if difficulty <= 1:
+		return 0.0
+	return log(float(difficulty)) / log(100.0)
+
+func enemy_stat_mult() -> float:
+	return lerp(1.0, 3.0, diff_scale())
+
+func coin_chance_mult() -> float:
+	return lerp(1.0, 4.0, diff_scale())
+
+func crate_chance_mult() -> float:
+	return lerp(1.0, 6.0, diff_scale())
+
+func bad_crate_chance() -> float:
+	return lerp(0.2, 1.0, diff_scale())
 
 # --- mutation ---
 
@@ -124,6 +154,7 @@ func _save() -> void:
 	cfg.set_value("stats", "coins", coins)
 	cfg.set_value("stats", "owned_guns", owned_guns)
 	cfg.set_value("stats", "equipped_gun", equipped_gun)
+	cfg.set_value("stats", "difficulty", difficulty)
 	for key in levels:
 		cfg.set_value("levels", key, levels[key])
 	cfg.save(SAVE_PATH)
@@ -136,5 +167,6 @@ func _load() -> void:
 	coins = cfg.get_value("stats", "coins", 0)
 	owned_guns = cfg.get_value("stats", "owned_guns", [])
 	equipped_gun = cfg.get_value("stats", "equipped_gun", "gun1")
+	difficulty = cfg.get_value("stats", "difficulty", 1)
 	for key in levels:
 		levels[key] = cfg.get_value("levels", key, 0)

@@ -22,9 +22,9 @@ color = Color(0.05, 0.05, 0.05, 1)
 [node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1075087014]
 custom_minimum_size = Vector2(600, 0)
 layout_mode = 0
-offset_top = 100.0
+offset_top = 60.0
 offset_right = 720.0
-offset_bottom = 380.0
+offset_bottom = 470.0
 theme_override_constants/separation = 20
 alignment = 1
 
@@ -71,3 +71,28 @@ layout_mode = 2
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 18
 text = "Play Again"
+
+[node name="Sep_Diff" type="HSeparator" parent="VBoxContainer/VBox_Menu" unique_id=300000001]
+layout_mode = 2
+
+[node name="Label_DiffTitle" type="Label" parent="VBoxContainer/VBox_Menu" unique_id=300000002]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 12
+text = "DIFFICULTY: 1"
+horizontal_alignment = 1
+
+[node name="Slider_Diff" type="HSlider" parent="VBoxContainer/VBox_Menu" unique_id=300000003]
+layout_mode = 2
+min_value = 1.0
+max_value = 100.0
+step = 1.0
+value = 1.0
+
+[node name="Label_DiffHint" type="Label" parent="VBoxContainer/VBox_Menu" unique_id=300000004]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 6
+text = "Tougher enemies  •  More loot  •  Meaner crates"
+horizontal_alignment = 1

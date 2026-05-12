@@ -3,15 +3,14 @@ extends Node2D
 const BEAM_WIDTH = 28.0
 const CORE_WIDTH = 10.0
 const MAX_RANGE = 2000.0
-const ENEMY_HIT_RADIUS = 28.0
-const DAMAGE_INTERVAL = 0.06
+const ENEMY_HIT_RADIUS = 40.0
 const BEAM_COLOR = Color(0.8, 0.3, 1.0, 0.85)
 const CORE_COLOR = Color(1.0, 0.85, 1.0, 1.0)
 
 var direction: Vector2 = Vector2.RIGHT
 var damage: int = 10
 
-var _damage_timer: float = 0.0
+var _damage_accum: float = 0.0
 var _outer: Line2D
 var _core: Line2D
 var _beam_end: Vector2 = Vector2.ZERO
@@ -23,12 +22,13 @@ func _ready() -> void:
 	add_child(_outer)
 	add_child(_core)
 
-func _process(delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	_update_beam()
-	_damage_timer -= delta
-	if _damage_timer <= 0.0:
-		_apply_damage()
-		_damage_timer = DAMAGE_INTERVAL
+	_damage_accum += damage * delta
+	if _damage_accum >= 1.0:
+		var dmg := int(_damage_accum)
+		_damage_accum -= float(dmg)
+		_apply_damage(dmg)
 
 func _update_beam() -> void:
 	var from := global_position
@@ -41,7 +41,7 @@ func _update_beam() -> void:
 	_outer.set_point_position(1, end_local)
 	_core.set_point_position(1, end_local)
 
-func _apply_damage() -> void:
+func _apply_damage(dmg: int) -> void:
 	var from := global_position
 	var beam_length: float = from.distance_to(_beam_end)
 	for enemy in get_tree().get_nodes_in_group("enemy"):
@@ -51,7 +51,7 @@ func _apply_damage() -> void:
 			continue
 		if absf(to_enemy.cross(direction)) <= ENEMY_HIT_RADIUS:
 			if enemy.has_method("take_damage"):
-				enemy.take_damage(damage)
+				enemy.take_damage(dmg)
 
 func _make_line(width: float, color: Color) -> Line2D:
 	var line := Line2D.new()

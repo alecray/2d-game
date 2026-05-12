@@ -19,7 +19,7 @@ const MIN_SPAWN_INTERVAL = 0.25  # fastest the spawner can ever get
 const SPAWN_DISTANCE = 80.0  # extra buffer beyond the screen edge to spawn enemies
 const KILLS_PER_EXTRA_ENEMY = 30  # one extra enemy spawned per tick for every N kills
 const CLUSTER_SPREAD = 40.0       # how far apart enemies in the same cluster can spawn
-const MAX_ENEMIES_CAP = 150
+const MAX_ENEMIES_CAP = 80
 const SCALE_RAMP_TIME = 20.0   # seconds at cap before each difficulty increment
 const SCALE_INCREMENT = 0.10   # stat multiplier added per increment (+10%)
 const SCALE_MAX = 4.0          # ceiling so stats don't grow forever
@@ -27,7 +27,7 @@ const ELITE_CHANCE = 0.15   # 15% chance a cluster spawns as elite
 const ELITE_PACK_SIZE = 3   # elite clusters always spawn this many
 const RARE_CHANCE = 0.02    # 2% chance any individual enemy spawns as rare (golden)
 const WORLD_SIZE = 2700
-const GRASS_COUNT = 200
+const GRASS_COUNT = 100
 const RUIN_CLUSTER_COUNT = 24
 const RUIN_MIN_PIECES = 2
 const RUIN_MAX_PIECES = 8
@@ -163,12 +163,12 @@ func spawn_enemy(cluster_origin: Vector2, is_elite: bool = false, pack_id: int =
 		enemy.pack_id = pack_id
 	elif randf() < RARE_CHANCE:
 		enemy.make_rare()
-	if scale > 1.0:
-		enemy.apply_difficulty(scale)
+	var diff_mult: float = get_node("/root/PlayerStats").enemy_stat_mult()
+	enemy.apply_difficulty(scale * diff_mult)
 
 ## Generates grass using blue noise algorithm for natural distribution
 func spawn_grass_in_area(count: int, area_size: Vector2, area_offset: Vector2) -> void:
-	print("Spawning ", count, " grass in area ", area_size, " at offset ", area_offset)
+
 	var min_distance = 100.0
 	var cell_size = min_distance / sqrt(2.0)
 	var grid: Dictionary = {}
@@ -199,12 +199,11 @@ func spawn_grass_in_area(count: int, area_size: Vector2, area_offset: Vector2) -
 		if not found:
 			active_list.remove_at(idx)
 
-	print("Generated ", points.size(), " grass points")
+
 	for point in points:
 		var grass = GRASS_SCENE.instantiate()
 		grass_parent.add_child(grass)
 		grass.global_position = point
-	print("Finished spawning grass")
 
 ## Converts 2D position to grid cell key for spatial partitioning
 func _grid_key(point: Vector2, cell_size: float) -> Vector2i:

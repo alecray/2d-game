@@ -1,7 +1,7 @@
 extends CPUParticles2D
 
 func _ready() -> void:
-	amount = 150
+	amount = 50
 	lifetime = 8.0
 	preprocess = 5.0
 	randomness = 1.0

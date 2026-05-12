@@ -3,7 +3,7 @@ extends CPUParticles2D
 func _ready() -> void:
 	one_shot = true
 	explosiveness = 0.95
-	amount = 16
+	amount = 8
 	lifetime = 0.55
 	emitting = true
 

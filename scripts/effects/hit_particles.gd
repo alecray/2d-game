@@ -5,7 +5,7 @@ var hit_direction: Vector2 = Vector2.RIGHT  # set to bullet direction before add
 func _ready() -> void:
 	one_shot = true
 	explosiveness = 1.0
-	amount = 10
+	amount = 6
 	lifetime = 0.2
 	emitting = true
 

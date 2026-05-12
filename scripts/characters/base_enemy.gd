@@ -235,12 +235,13 @@ func die() -> void:
 	get_parent().add_child(particles)
 	particles.global_position = global_position
 
-	if randf() < CRATE_DROP_CHANCE:
+	var _ps := get_node("/root/PlayerStats")
+	if randf() < CRATE_DROP_CHANCE * _ps.crate_chance_mult():
 		var crate = CRATE_SCENE.instantiate()
 		crate.position = get_parent().to_local(global_position)
 		get_parent().call_deferred("add_child", crate)
 
-	if randf() < COIN_DROP_CHANCE:
+	if randf() < COIN_DROP_CHANCE * _ps.coin_chance_mult():
 		var coin = COIN_SCENE.instantiate()
 		coin.position = get_parent().to_local(global_position)
 		get_parent().call_deferred("add_child", coin)

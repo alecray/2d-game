@@ -3,7 +3,7 @@ extends Control
 const SHOP_ENTRY_SCENE = preload("res://prefabs/shop_entry.tscn")
 
 
-@onready var _entry_list: VBoxContainer = $VBox/EntryList
+@onready var _entry_list: VBoxContainer = $VBox/Scroll/EntryList
 @onready var _coins_label: Label = $VBox/LabelCoins
 
 var _stats: Node
