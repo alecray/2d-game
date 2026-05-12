@@ -20,10 +20,14 @@ const RAGE_DURATION = 1.5           # seconds the enemy charges at boosted speed
 const RAGE_SPEED_MULTIPLIER = 2.0   # speed multiplier applied during rage
 const AMMO_DROP_CHANCE = 0.1        # roll below this → drop ammo on death
 const HEALTH_DROP_CHANCE = 0.2      # roll below this (but above ammo) → drop health on death
+const XP_REWARD = 5                 # XP granted to the player on death
+const ELITE_XP_REWARD = 15         # XP for elite (pack) enemies
+const RARE_XP_REWARD = 50          # XP for rare (golden) enemies
 const HEALTH_BAR_WIDTH = 32.0
 const HEALTH_BAR_HEIGHT = 4.0
 const HEALTH_BAR_OFFSET_Y = 26.0    # how far above the sprite centre the health bar sits
 const FloatingText = preload("res://scripts/utils/floating_text.gd")
+const EnemyDeathParticles = preload("res://scripts/effects/enemy_death_particles.gd")
 
 # what this enemy will drop when it dies — assigned randomly at spawn
 enum DropType { NONE, AMMO, HEALTH }
@@ -33,6 +37,7 @@ var health = 10
 var rage_timer = 0.0   # while > 0, enemy charges at boosted speed
 var pack_id = -1       # shared ID for elite pack-mates; -1 means no pack
 var is_invisible = false
+var is_rare = false
 
 var direction = Vector2.ZERO    # current movement direction (unit vector)
 var time_until_change = 0.0     # countdown until the next random direction pick
@@ -137,6 +142,24 @@ func _draw() -> void:
 	var col = Color(0.2, 0.85, 0.2) if health > max_health * 0.5 else Color(0.9, 0.2, 0.2)
 	draw_rect(Rect2(bar_pos, Vector2(fill, bar_height)), col)
 
+## Override in subclasses to return the base sprite colour used for death particles.
+func get_death_color() -> Color:
+	return Color(0.25, 0.75, 0.25)
+
+## Upgrades this enemy to rare tier: enormous, slow, very tough, and covered in gold.
+func make_rare() -> void:
+	is_rare = true
+	var mat = ShaderMaterial.new()
+	mat.shader = preload("res://assets/shaders/gold_glow.gdshader")
+	$AnimatedSprite2D.material = mat
+	scale = Vector2(3.0, 3.0)
+	max_health *= 4
+	health = max_health
+	SPEED *= 0.5
+	CHASE_SPEED *= 0.5
+	DAMAGE *= 2
+	current_speed = SPEED
+
 ## Upgrades this enemy to elite tier: bigger, faster, tougher, and visually distinct.
 func make_elite() -> void:
 	var mat = ShaderMaterial.new()
@@ -149,9 +172,21 @@ func make_elite() -> void:
 	max_health = 30
 	health = max_health
 
-## Removes the enemy, increments the kill counter, and grants the player any loot drop.
+## Removes the enemy, increments the kill counter, grants XP, and drops any loot.
 func die() -> void:
 	get_node("/root/GameState").kills += 1
+
+	var xp = RARE_XP_REWARD if is_rare else (ELITE_XP_REWARD if pack_id != -1 else XP_REWARD)
+	get_node("/root/PlayerStats").add_xp(xp)
+	var xp_label = FloatingText.new()
+	xp_label.text = "+" + str(xp) + " XP"
+	xp_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.1, 1.0))
+	xp_label.add_theme_font_size_override("font_size", 7)
+	xp_label.hold_duration = 0.3
+	xp_label.fade_duration = 0.25
+	get_parent().add_child(xp_label)
+	xp_label.global_position = global_position
+
 	var player = get_tree().get_first_node_in_group("player")
 	if player:
 		if drop_type == DropType.AMMO:
@@ -160,6 +195,17 @@ func die() -> void:
 		elif drop_type == DropType.HEALTH:
 			player.health = player.MAX_HEALTH
 			_spawn_popup("HEALTH!", Color(0, 1, 0, 1))
+
+	# color and particle count scale with enemy tier
+	var p_color = Color(1.0, 0.75, 0.05) if is_rare else (Color(0.1, 0.45, 1.0) if pack_id != -1 else get_death_color())
+	var p_amount = 80 if is_rare else (50 if pack_id != -1 else 28)
+	var particles = CPUParticles2D.new()
+	particles.set_script(EnemyDeathParticles)
+	particles.base_color = p_color
+	particles.base_amount = p_amount
+	get_parent().add_child(particles)
+	particles.global_position = global_position
+
 	queue_free()
 
 func _spawn_popup(text: String, color: Color) -> void:

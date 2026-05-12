@@ -9,6 +9,7 @@ const FADE_START = 0.8  # begin fading when this many seconds of lifetime remain
 var direction = Vector2.ZERO
 var lifetime = LIFETIME
 var bounces = 0
+var damage = DAMAGE  # can be overridden by the shooter
 
 func _ready() -> void:
 	area_entered.connect(_on_area_entered)
@@ -45,5 +46,5 @@ func _on_area_entered(area: Area2D) -> void:
 	if area.is_in_group("enemy_hitbox"):
 		var enemy = area.get_parent()
 		if enemy.has_method("take_damage"):
-			enemy.take_damage(DAMAGE)
+			enemy.take_damage(damage)
 		queue_free()

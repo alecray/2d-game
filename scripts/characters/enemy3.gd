@@ -58,6 +58,9 @@ func _physics_process(delta: float) -> void:
 	if direction.x != 0:
 		$AnimatedSprite2D.flip_h = direction.x < 0
 
+func get_death_color() -> Color:
+	return Color(0.55, 0.1, 0.85)
+
 func _shoot(aim_direction: Vector2) -> void:
 	var bullet = ENEMY_BULLET.instantiate()
 	bullet.direction = aim_direction

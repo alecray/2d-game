@@ -6,3 +6,6 @@ func _ready() -> void:
 	CHASE_SPEED = 73.0
 	DAMAGE = 30
 	super._ready()
+
+func get_death_color() -> Color:
+	return Color(0.75, 0.35, 0.1)

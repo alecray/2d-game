@@ -8,6 +8,7 @@ const ENEMY2_CHANCE = 0.25  # probability any given enemy spawns as enemy2
 const ENEMY3_CHANCE = 0.20  # probability any given enemy spawns as enemy3
 const GRASS_SCENE = preload("res://prefabs/environment/grass1.tscn")
 const WALL_SCRIPT = preload("res://scripts/environment/wall.gd")
+const DUST_SCRIPT = preload("res://scripts/environment/dust_particles.gd")
 # Drop your tileable stone texture at this path to apply it to all walls
 const WALL_TEXTURE = "res://assets/sprites/environment/wall1.png"
 const BASE_SPAWN_INTERVAL = 2.0  # starting time between enemy spawns
@@ -15,9 +16,11 @@ const MIN_SPAWN_INTERVAL = 0.25  # fastest the spawner can ever get
 const SPAWN_DISTANCE = 80.0  # extra buffer beyond the screen edge to spawn enemies
 const KILLS_PER_EXTRA_ENEMY = 30  # one extra enemy spawned per tick for every N kills
 const CLUSTER_SPREAD = 40.0       # how far apart enemies in the same cluster can spawn
-const MAX_ENEMIES = 100
+const MAX_ENEMIES_CAP = 5000
+const MAX_ENEMIES_HP_KNEE = 4900.0  # HP value at which the cap is at 50% (2500 enemies)
 const ELITE_CHANCE = 0.15   # 15% chance a cluster spawns as elite
 const ELITE_PACK_SIZE = 3   # elite clusters always spawn this many
+const RARE_CHANCE = 0.02    # 2% chance any individual enemy spawns as rare (golden)
 const WORLD_SIZE = 2000
 const GRASS_COUNT = 200
 const RUIN_CLUSTER_COUNT = 18
@@ -42,6 +45,9 @@ func _get_spawn_count() -> int:
 
 func _ready() -> void:
 	spawn_timer = BASE_SPAWN_INTERVAL
+	var dust = CPUParticles2D.new()
+	dust.set_script(DUST_SCRIPT)
+	player.add_child(dust)
 	var spawn_area_size = Vector2(WORLD_SIZE, WORLD_SIZE)
 	var spawn_area_offset = -spawn_area_size / 2
 	spawn_grass_in_area(GRASS_COUNT, spawn_area_size, spawn_area_offset)
@@ -69,12 +75,17 @@ func spawn_ruins() -> void:
 			if tex:
 				wall.texture = tex
 
+func _get_max_enemies() -> int:
+	var hp = float(player.MAX_HEALTH)
+	return int(MAX_ENEMIES_CAP * hp / (hp + MAX_ENEMIES_HP_KNEE))
+
 func _process(delta: float) -> void:
 	spawn_timer -= delta
 	if spawn_timer <= 0:
 		var current = get_tree().get_nodes_in_group("enemy").size()
+		var max_enemies = _get_max_enemies()
 		var count = _get_spawn_count()
-		if current < MAX_ENEMIES:
+		if current < max_enemies:
 			# roll elite once per cluster — elites always come in a fixed pack size
 			var is_elite = randf() < ELITE_CHANCE
 			var cluster_origin = _get_cluster_origin()
@@ -84,7 +95,7 @@ func _process(delta: float) -> void:
 				pack_id = _next_pack_id
 				_next_pack_id += 1
 			for i in spawn_count:
-				if current + i < MAX_ENEMIES:
+				if current + i < max_enemies:
 					spawn_enemy(cluster_origin, is_elite, pack_id)
 		spawn_timer = _get_spawn_interval()
 
@@ -111,6 +122,8 @@ func spawn_enemy(cluster_origin: Vector2, is_elite: bool = false, pack_id: int =
 	if is_elite:
 		enemy.make_elite()
 		enemy.pack_id = pack_id
+	elif randf() < RARE_CHANCE:
+		enemy.make_rare()
 
 ## Generates grass using blue noise algorithm for natural distribution
 func spawn_grass_in_area(count: int, area_size: Vector2, area_offset: Vector2) -> void:
