@@ -1,6 +1,8 @@
 extends CanvasLayer
 
-const FONT = preload("res://assets/fonts/PressStart2P-Regular.ttf")
+const UPGRADE_CARD_SCENE = preload("res://prefabs/upgrade_card.tscn")
+
+@onready var _card_row: HBoxContainer = $Center/VBox/CardRow
 
 const UPGRADES := [
 	{"id": "haste",       "name": "HASTE",       "desc": "+40 move speed"},
@@ -18,91 +20,16 @@ const UPGRADES := [
 
 func _ready() -> void:
 	add_to_group("upgrade_screen")
-	layer = 20
-	process_mode = Node.PROCESS_MODE_ALWAYS
 	get_tree().paused = true
-	_build_ui()
-
-func _build_ui() -> void:
-	var overlay := ColorRect.new()
-	overlay.color = Color(0.0, 0.0, 0.0, 0.75)
-	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(overlay)
-
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(center)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 24)
-	center.add_child(vbox)
-
-	var title := Label.new()
-	title.text = "CHOOSE AN UPGRADE"
-	title.add_theme_font_override("font", FONT)
-	title.add_theme_font_size_override("font_size", 10)
-	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.1))
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(title)
-
-	var hbox := HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 16)
-	vbox.add_child(hbox)
-
 	var pool := UPGRADES.duplicate()
 	pool.shuffle()
 	for upgrade in pool.slice(0, 3):
-		hbox.add_child(_make_card(upgrade))
+		_card_row.add_child(_make_card(upgrade))
 
 func _make_card(upgrade: Dictionary) -> Button:
-	var btn := Button.new()
-	btn.custom_minimum_size = Vector2(165, 145)
-	btn.process_mode = Node.PROCESS_MODE_ALWAYS
-
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color(0.08, 0.08, 0.14)
-	normal.set_border_width_all(2)
-	normal.border_color = Color(0.35, 0.35, 0.6)
-	btn.add_theme_stylebox_override("normal", normal)
-
-	var hover := normal.duplicate() as StyleBoxFlat
-	hover.bg_color = Color(0.13, 0.13, 0.22)
-	hover.border_color = Color(1.0, 0.85, 0.1)
-	btn.add_theme_stylebox_override("hover", hover)
-	btn.add_theme_stylebox_override("focus", hover)
-
-	var pressed_style := normal.duplicate() as StyleBoxFlat
-	pressed_style.bg_color = Color(0.18, 0.18, 0.3)
-	btn.add_theme_stylebox_override("pressed", pressed_style)
-
-	var name_lbl := Label.new()
-	name_lbl.text = upgrade.name
-	name_lbl.add_theme_font_override("font", FONT)
-	name_lbl.add_theme_font_size_override("font_size", 8)
-	name_lbl.add_theme_color_override("font_color", Color(1.0, 0.85, 0.1))
-	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	name_lbl.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	name_lbl.offset_top = 16
-	name_lbl.offset_bottom = 40
-	btn.add_child(name_lbl)
-
-	var desc_lbl := Label.new()
-	desc_lbl.text = upgrade.desc
-	desc_lbl.add_theme_font_override("font", FONT)
-	desc_lbl.add_theme_font_size_override("font_size", 6)
-	desc_lbl.add_theme_color_override("font_color", Color(0.78, 0.78, 0.78))
-	desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	desc_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	desc_lbl.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	desc_lbl.offset_top = 56
-	desc_lbl.offset_bottom = 135
-	desc_lbl.offset_left = 8
-	desc_lbl.offset_right = -8
-	btn.add_child(desc_lbl)
-
+	var btn: Button = UPGRADE_CARD_SCENE.instantiate()
+	btn.get_node("NameLabel").text = upgrade.name
+	btn.get_node("DescLabel").text = upgrade.desc
 	btn.pressed.connect(func(): _on_chosen(upgrade))
 	return btn
 

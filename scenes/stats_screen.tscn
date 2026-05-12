@@ -44,6 +44,14 @@ theme_override_font_sizes/font_size = 16
 text = "XP: 0"
 horizontal_alignment = 1
 
+[node name="LabelCoins" type="Label" parent="VBox" unique_id=1456832019]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.78, 0.1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 16
+text = "COINS: 0"
+horizontal_alignment = 1
+
 [node name="SepTop" type="HSeparator" parent="VBox" unique_id=1169643625]
 layout_mode = 2
 

@@ -1,6 +1,6 @@
 extends Area2D
 
-const UpgradeScreen = preload("res://scripts/ui/upgrade_screen.gd")
+const UPGRADE_SCREEN_SCENE = preload("res://prefabs/upgrade_screen.tscn")
 const FONT = preload("res://assets/fonts/PressStart2P-Regular.ttf")
 
 const BAD_CRATE_CHANCE = 0.2
@@ -56,8 +56,7 @@ func _on_body_entered(body: Node2D) -> void:
 	else:
 		if get_tree().get_nodes_in_group("upgrade_screen").size() > 0:
 			return
-		var screen := CanvasLayer.new()
-		screen.set_script(UpgradeScreen)
+		var screen = UPGRADE_SCREEN_SCENE.instantiate()
 		get_tree().root.add_child(screen)
 	queue_free()
 
