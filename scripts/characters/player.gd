@@ -10,6 +10,7 @@ const KNOCKBACK_FORCE = 300.0
 var health = MAX_HEALTH
 var damage_cooldown = 0.0
 var ammo = 100
+var knockback_velocity = Vector2.ZERO
 
 func _ready() -> void:
 	add_to_group("player")
@@ -38,6 +39,8 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity = Vector2.ZERO
 
+	velocity += knockback_velocity
+	knockback_velocity = knockback_velocity.lerp(Vector2.ZERO, delta * 10)
 	move_and_slide()
 
 	if input_direction.x != 0:
@@ -48,6 +51,7 @@ func _physics_process(delta: float) -> void:
 	for body in $HurtBox.get_overlapping_bodies():
 		if body.is_in_group("enemy") and damage_cooldown <= 0:
 			take_damage(body.DAMAGE)
+			knockback_velocity = (global_position - body.global_position).normalized() * KNOCKBACK_FORCE
 			damage_cooldown = DAMAGE_COOLDOWN
 
 func _input(event: InputEvent) -> void:
@@ -57,10 +61,11 @@ func _input(event: InputEvent) -> void:
 
 ## Takes damage and updates display
 func take_damage(amount: int) -> void:
-	health -= amount
+	health = max(0, health - amount)
 	update_health_display()
-	print("Player took damage! Health: ", health)
 	flash_white()
+	if health <= 0:
+		get_tree().change_scene_to_file("res://scenes/game_over.tscn")
 
 ## Flash the sprite white for visual damage feedback
 func flash_white() -> void:
