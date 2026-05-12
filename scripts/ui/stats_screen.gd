@@ -2,11 +2,13 @@ extends Control
 
 var _stats: Node
 var _xp_label: Label
+var _coins_label: Label
 var _rows: Dictionary = {}  # stat key → {level_label, cost_label, button}
 
 func _ready() -> void:
 	_stats = get_node("/root/PlayerStats")
 	_xp_label = $VBox/LabelXP
+	_coins_label = $VBox/LabelCoins
 
 	for key in PlayerStats.STAT_DEFS:
 		var row_path = "VBox/" + _row_node_name(key)
@@ -30,6 +32,7 @@ func _row_node_name(key: String) -> String:
 
 func _refresh() -> void:
 	_xp_label.text = "XP: " + str(_stats.xp)
+	_coins_label.text = "COINS: " + str(_stats.coins)
 	for key in _rows:
 		var row = _rows[key]
 		var level = _stats.get_level(key)

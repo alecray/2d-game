@@ -9,6 +9,7 @@
 [ext_resource type="Script" uid="uid://8st331s4dgtn" path="res://scripts/ui/ui_bob.gd" id="6_uibob"]
 [ext_resource type="Script" uid="uid://65styo81avaq" path="res://scripts/ui/mana_label.gd" id="7_mlabel"]
 [ext_resource type="Script" uid="uid://7slr1jfsnvmk" path="res://scripts/ui/enemy_counter_label.gd" id="8_ecounter"]
+[ext_resource type="Script" path="res://scripts/ui/version_label.gd" id="9_verlabel"]
 
 [sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_85g3d"]
 _data = PackedByteArray("AAADAAUAAAABAAAAQAAAACAAAACsAAAAUklGRqQAAABXRUJQVlA4TJcAAAAvP8AHED9AqIGZ9bT7mRCqURNJCvNtIAihQwv+RaCATMBCiJUQQiCdFfHNfwgC2QBj7/LOPnIH1pAkyWqFVWiFUViFUViF53/O/R/Rf7Rt24ZG1kJ9A8/4GnzLwes1mp1x5l1Ks7NAYcdqYf135gK/b1mdiUBRFQJ2Z5ijs90/hlEpRnF0JgJfg9mZCfucDdidmbDvq+kAAA==")
@@ -161,3 +162,23 @@ theme_override_font_sizes/font_size = 8
 text = "0"
 horizontal_alignment = 1
 script = ExtResource("8_ecounter")
+
+[node name="Label_Version" type="Label" parent="HUDLayer/UI" unique_id=738291047]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -130.0
+offset_top = -20.0
+offset_right = -8.0
+offset_bottom = -6.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_colors/font_color = Color(1, 1, 1, 0.4)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 6
+text = "Version 0.1.0"
+horizontal_alignment = 2
+script = ExtResource("9_verlabel")

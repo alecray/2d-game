@@ -13,6 +13,7 @@ const STAT_DEFS = {
 }
 
 var xp: int = 0
+var coins: int = 0
 var levels: Dictionary = {}
 
 func _ready() -> void:
@@ -45,6 +46,10 @@ func add_xp(amount: int) -> void:
 	xp += amount
 	_save()
 
+func add_coins(amount: int) -> void:
+	coins += amount
+	_save()
+
 func reset() -> void:
 	xp = 0
 	for key in levels:
@@ -73,6 +78,7 @@ func ammo_bonus() -> int:
 func _save() -> void:
 	var cfg = ConfigFile.new()
 	cfg.set_value("stats", "xp", xp)
+	cfg.set_value("stats", "coins", coins)
 	for key in levels:
 		cfg.set_value("levels", key, levels[key])
 	cfg.save(SAVE_PATH)
@@ -82,5 +88,6 @@ func _load() -> void:
 	if cfg.load(SAVE_PATH) != OK:
 		return
 	xp = cfg.get_value("stats", "xp", 0)
+	coins = cfg.get_value("stats", "coins", 0)
 	for key in levels:
 		levels[key] = cfg.get_value("levels", key, 0)
