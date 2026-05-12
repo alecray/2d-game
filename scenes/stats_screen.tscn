@@ -36,6 +36,13 @@ theme_override_font_sizes/font_size = 27
 text = "UPGRADE STATS"
 horizontal_alignment = 1
 
+[node name="BtnShop" type="Button" parent="VBox" unique_id=234567891]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.78, 0.1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 20
+text = "SHOP"
+
 [node name="LabelXP" type="Label" parent="VBox" unique_id=979804690]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.9, 0.1, 1)

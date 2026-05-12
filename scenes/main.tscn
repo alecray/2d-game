@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://6flu7i30lmr4" path="res://scenes/main.gd" id="1_jyhfs"]
 [ext_resource type="Texture2D" uid="uid://c0gxy12jx3ry4" path="res://assets/sprites/backgrounds/background-1.png" id="1_o5qli"]
 [ext_resource type="Script" uid="uid://cc5lka85pb1ok" path="res://scripts/characters/player.gd" id="2_sugp2"]
+[ext_resource type="Texture2D" uid="uid://mlulhy2fg4fg" path="res://assets/sprites/weapons/gun1.png" id="2_gun"]
 [ext_resource type="FontFile" uid="uid://d1ajy0i3e10af" path="res://assets/fonts/PressStart2P-Regular.ttf" id="3_font"]
 [ext_resource type="Script" uid="uid://de21due6jb8ri" path="res://scripts/ui/health_label.gd" id="4_hlabel"]
 [ext_resource type="Script" uid="uid://cuwtouh3ix8h7" path="res://scripts/ui/ammo_label.gd" id="5_alabel"]
@@ -10,6 +11,7 @@
 [ext_resource type="Script" uid="uid://65styo81avaq" path="res://scripts/ui/mana_label.gd" id="7_mlabel"]
 [ext_resource type="Script" uid="uid://7slr1jfsnvmk" path="res://scripts/ui/enemy_counter_label.gd" id="8_ecounter"]
 [ext_resource type="Script" path="res://scripts/ui/version_label.gd" id="9_verlabel"]
+[ext_resource type="Script" path="res://scripts/ui/dev_menu.gd" id="10_devmenu"]
 
 [sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_85g3d"]
 _data = PackedByteArray("AAADAAUAAAABAAAAQAAAACAAAACsAAAAUklGRqQAAABXRUJQVlA4TJcAAAAvP8AHED9AqIGZ9bT7mRCqURNJCvNtIAihQwv+RaCATMBCiJUQQiCdFfHNfwgC2QBj7/LOPnIH1pAkyWqFVWiFUViFUViF53/O/R/Rf7Rt24ZG1kJ9A8/4GnzLwes1mp1x5l1Ks7NAYcdqYf135gK/b1mdiUBRFQJ2Z5ijs90/hlEpRnF0JgJfg9mZCfucDdidmbDvq+kAAA==")
@@ -60,6 +62,12 @@ z_as_relative = false
 [node name="CharacterBody2D_Player" type="CharacterBody2D" parent="." unique_id=1295080485]
 z_index = 10
 script = ExtResource("2_sugp2")
+
+[node name="Gun" type="Sprite2D" parent="CharacterBody2D_Player" unique_id=583920471]
+z_index = -1
+texture_filter = 3
+texture = ExtResource("2_gun")
+offset = Vector2(8, 0)
 
 [node name="AnimatedSprite2D_Player" type="AnimatedSprite2D" parent="CharacterBody2D_Player" unique_id=31768930]
 texture_filter = 1
@@ -182,3 +190,56 @@ theme_override_font_sizes/font_size = 6
 text = "Version 0.1.0"
 horizontal_alignment = 2
 script = ExtResource("9_verlabel")
+
+[node name="DevMenu" type="CanvasLayer" parent="." unique_id=111111111]
+layer = 20
+process_mode = 3
+script = ExtResource("10_devmenu")
+
+[node name="Panel" type="PanelContainer" parent="DevMenu" unique_id=111111112]
+process_mode = 3
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -150.0
+offset_right = 180.0
+offset_bottom = 150.0
+
+[node name="VBox" type="VBoxContainer" parent="DevMenu/Panel" unique_id=111111113]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="LabelTitle" type="Label" parent="DevMenu/Panel/VBox" unique_id=111111114]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "DEVELOPER MENU"
+horizontal_alignment = 1
+
+[node name="Sep" type="HSeparator" parent="DevMenu/Panel/VBox" unique_id=111111115]
+layout_mode = 2
+
+[node name="BtnKillPlayer" type="Button" parent="DevMenu/Panel/VBox" unique_id=111111116]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 10
+text = "KILL PLAYER / END ROUND"
+
+[node name="BtnGiveCoins" type="Button" parent="DevMenu/Panel/VBox" unique_id=111111117]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 10
+text = "GIVE 1000 COINS"
+
+[node name="Sep2" type="HSeparator" parent="DevMenu/Panel/VBox" unique_id=111111118]
+layout_mode = 2
+
+[node name="BtnClose" type="Button" parent="DevMenu/Panel/VBox" unique_id=111111119]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 10
+text = "CLOSE  [U]"

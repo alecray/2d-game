@@ -2,7 +2,7 @@ extends Area2D
 
 const SPEED = 400.0
 const LIFETIME = 2.5
-const MAX_BOUNCES = 3
+const MAX_BOUNCES = 0
 const DAMAGE = 5
 const FADE_START = 0.8  # begin fading when this many seconds of lifetime remain
 const ENEMY_KNOCKBACK = 200.0
@@ -20,10 +20,12 @@ var max_bounces = MAX_BOUNCES  # boosted by Ricochet upgrade
 var piercing = false        # Penetrator: pass through enemies
 var explosive = false       # Volatile: AOE damage on hit
 var homing = false          # Seeker: curve toward nearest enemy
+var bullet_color = Color.WHITE  # set by the player; gun types will override this
 var _hit_enemies: Dictionary = {}
 
 func _ready() -> void:
 	area_entered.connect(_on_area_entered)
+	$ColorRect.color = bullet_color
 	var mat = CanvasItemMaterial.new()
 	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	material = mat
