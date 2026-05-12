@@ -3,6 +3,12 @@
 extends Label
 
 const FONT = preload("res://assets/fonts/PressStart2P-Regular.ttf")
+const POPUP_FONT_SIZE = 10
+const POPUP_OFFSET_Y = 10.0
+const POPUP_FLOAT_DISTANCE = 30.0
+const POPUP_DURATION = 0.6
+const POPUP_ROTATION_START = 10
+const POPUP_ROTATION_END = -15
 
 func _ready() -> void:
 	# wait one frame so the player node has finished its own _ready() and joined the group
@@ -19,16 +25,16 @@ func _spawn_cost_popup(cost: int) -> void:
 	var label = Label.new()
 	label.text = "-" + str(cost)
 	label.add_theme_font_override("font", FONT)
-	label.add_theme_font_size_override("font_size", 10)
+	label.add_theme_font_size_override("font_size", POPUP_FONT_SIZE)
 	label.add_theme_color_override("font_color", Color(0.6, 0.0, 1.0, 1.0))
 	# start just above this label's position
-	label.position = position + Vector2(0, -10)
+	label.position = position + Vector2(0, -POPUP_OFFSET_Y)
 	# slight clockwise tilt so it can animate counter-clockwise as it rises
-	label.rotation = deg_to_rad(10)
+	label.rotation = deg_to_rad(POPUP_ROTATION_START)
 	get_parent().add_child(label)
 	var tween = label.create_tween()
 	tween.set_parallel(true)
-	tween.tween_property(label, "position:y", label.position.y - 30, 0.6)
-	tween.tween_property(label, "rotation", deg_to_rad(-15), 0.6).set_trans(Tween.TRANS_CUBIC)
-	tween.tween_property(label, "modulate:a", 0.0, 0.6)
-	tween.tween_callback(label.queue_free).set_delay(0.6)
+	tween.tween_property(label, "position:y", label.position.y - POPUP_FLOAT_DISTANCE, POPUP_DURATION)
+	tween.tween_property(label, "rotation", deg_to_rad(POPUP_ROTATION_END), POPUP_DURATION).set_trans(Tween.TRANS_CUBIC)
+	tween.tween_property(label, "modulate:a", 0.0, POPUP_DURATION)
+	tween.tween_callback(label.queue_free).set_delay(POPUP_DURATION)

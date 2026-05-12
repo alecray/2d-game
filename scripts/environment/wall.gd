@@ -3,6 +3,9 @@ extends StaticBody2D
 var size = Vector2(80, 20)
 var _poly: PackedVector2Array
 
+const EDGE_ROUGHNESS = 4.0
+const EDGE_SEGMENTS = 4
+
 func _ready() -> void:
 	var shape = RectangleShape2D.new()
 	shape.size = size
@@ -17,7 +20,7 @@ func _ready() -> void:
 func _build_rough_poly(s: Vector2) -> PackedVector2Array:
 	var pts = PackedVector2Array()
 	var h = s / 2
-	var roughness = 4.0
+	var roughness = EDGE_ROUGHNESS
 	var edges = [
 		[Vector2(-h.x, -h.y), Vector2( h.x, -h.y), Vector2( 0, -1)],
 		[Vector2( h.x, -h.y), Vector2( h.x,  h.y), Vector2( 1,  0)],
@@ -29,8 +32,8 @@ func _build_rough_poly(s: Vector2) -> PackedVector2Array:
 		var b: Vector2 = edge[1]
 		var n: Vector2 = edge[2]
 		pts.append(a)
-		for i in range(1, 4):
-			var t = float(i) / 4.0
+		for i in range(1, EDGE_SEGMENTS):
+			var t = float(i) / float(EDGE_SEGMENTS)
 			var mid = a.lerp(b, t)
 			var bow = sin(t * PI) * randf_range(-roughness, roughness)
 			pts.append(mid + n * bow)

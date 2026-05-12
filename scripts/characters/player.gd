@@ -41,6 +41,7 @@ var bob_time = 0.0
 
 func _ready() -> void:
 	add_to_group("player")
+	$HurtBox.add_to_group("player_hitbox")
 	# attach the white flash shader so we can trigger it when the player takes damage
 	var shader_mat = ShaderMaterial.new()
 	shader_mat.shader = preload("res://assets/shaders/white_flash.gdshader")

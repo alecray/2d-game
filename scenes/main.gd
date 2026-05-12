@@ -2,16 +2,27 @@
 extends Node2D
 
 const ENEMY_SCENE = preload("res://prefabs/enemies/enemy1.tscn")
+const ENEMY2_SCENE = preload("res://prefabs/enemies/enemy2.tscn")
+const ENEMY3_SCENE = preload("res://prefabs/enemies/enemy3.tscn")
+const ENEMY2_CHANCE = 0.25  # probability any given enemy spawns as enemy2
+const ENEMY3_CHANCE = 0.20  # probability any given enemy spawns as enemy3
 const GRASS_SCENE = preload("res://prefabs/environment/grass1.tscn")
 const WALL_SCRIPT = preload("res://scripts/environment/wall.gd")
 const BASE_SPAWN_INTERVAL = 2.0  # starting time between enemy spawns
 const MIN_SPAWN_INTERVAL = 0.25  # fastest the spawner can ever get
-const SPAWN_DISTANCE = 300.0
+const SPAWN_DISTANCE = 80.0  # extra buffer beyond the screen edge to spawn enemies
 const KILLS_PER_EXTRA_ENEMY = 30  # one extra enemy spawned per tick for every N kills
 const CLUSTER_SPREAD = 40.0       # how far apart enemies in the same cluster can spawn
 const MAX_ENEMIES = 100
 const ELITE_CHANCE = 0.15   # 15% chance a cluster spawns as elite
 const ELITE_PACK_SIZE = 3   # elite clusters always spawn this many
+const WORLD_SIZE = 2000
+const GRASS_COUNT = 200
+const RUIN_CLUSTER_COUNT = 18
+const RUIN_MIN_PIECES = 2
+const RUIN_MAX_PIECES = 5
+const RUIN_SCATTER = 60.0
+const WALL_ROTATION_RANGE = 0.2
 
 @onready var player = $CharacterBody2D_Player
 @onready var grass_parent = $GrassParent
@@ -29,9 +40,9 @@ func _get_spawn_count() -> int:
 
 func _ready() -> void:
 	spawn_timer = BASE_SPAWN_INTERVAL
-	var spawn_area_size = Vector2(2000, 2000)
+	var spawn_area_size = Vector2(WORLD_SIZE, WORLD_SIZE)
 	var spawn_area_offset = -spawn_area_size / 2
-	spawn_grass_in_area(200, spawn_area_size, spawn_area_offset)
+	spawn_grass_in_area(GRASS_COUNT, spawn_area_size, spawn_area_offset)
 	spawn_ruins()
 
 func spawn_ruins() -> void:
@@ -40,16 +51,16 @@ func spawn_ruins() -> void:
 		Vector2(48, 20), Vector2(20, 48),
 		Vector2(64, 20), Vector2(20, 64),
 	]
-	for i in 18:
+	for i in RUIN_CLUSTER_COUNT:
 		var angle = randf() * TAU
 		var dist = randf_range(200, 900)
 		var cluster_pos = Vector2.from_angle(angle) * dist
-		for j in randi_range(2, 5):
-			var offset = Vector2(randf_range(-60, 60), randf_range(-60, 60))
+		for j in randi_range(RUIN_MIN_PIECES, RUIN_MAX_PIECES):
+			var offset = Vector2(randf_range(-RUIN_SCATTER, RUIN_SCATTER), randf_range(-RUIN_SCATTER, RUIN_SCATTER))
 			var wall = StaticBody2D.new()
 			wall.set_script(WALL_SCRIPT)
 			wall.size = wall_sizes[randi() % wall_sizes.size()]
-			wall.rotation = randf_range(-0.2, 0.2)
+			wall.rotation = randf_range(-WALL_ROTATION_RANGE, WALL_ROTATION_RANGE)
 			add_child(wall)
 			wall.global_position = cluster_pos + offset
 
@@ -72,15 +83,22 @@ func _process(delta: float) -> void:
 					spawn_enemy(cluster_origin, is_elite, pack_id)
 		spawn_timer = _get_spawn_interval()
 
-## Returns a random point just outside the player's view to use as a cluster center
+## Returns a random point just outside the camera's visible area to use as a cluster center.
+## Calculates the screen half-diagonal at runtime so it works at any resolution or zoom level.
 func _get_cluster_origin() -> Vector2:
 	var angle = randf() * TAU
-	var distance = randf_range(SPAWN_DISTANCE * 0.8, SPAWN_DISTANCE)
+	var camera = get_viewport().get_camera_2d()
+	var zoom = camera.zoom.x if camera else 1.0
+	var half_screen = get_viewport().get_visible_rect().size / (2.0 * zoom)
+	var min_dist = half_screen.length() + SPAWN_DISTANCE
+	var distance = randf_range(min_dist, min_dist + 150.0)
 	return player.global_position + Vector2.from_angle(angle) * distance
 
 ## Spawns one enemy near the given cluster origin
 func spawn_enemy(cluster_origin: Vector2, is_elite: bool = false, pack_id: int = -1) -> void:
-	var enemy = ENEMY_SCENE.instantiate()
+	var roll = randf()
+	var scene = ENEMY2_SCENE if roll < ENEMY2_CHANCE else ENEMY3_SCENE if roll < ENEMY2_CHANCE + ENEMY3_CHANCE else ENEMY_SCENE
+	var enemy = scene.instantiate()
 	var scatter = Vector2.from_angle(randf() * TAU) * randf() * CLUSTER_SPREAD
 	enemy.global_position = cluster_origin + scatter
 	enemy.add_to_group("enemy")
