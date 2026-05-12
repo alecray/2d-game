@@ -34,7 +34,7 @@ size = Vector2(34, 31)
 [node name="Enemy1" type="CharacterBody2D" unique_id=1852499199]
 script = ExtResource("2_example")
 
-[node name="AnimatedSprite2D_Enemy1" type="AnimatedSprite2D" parent="." unique_id=1128824089]
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1128824089]
 texture_filter = 3
 sprite_frames = SubResource("SpriteFrames_t61mr")
 frame_progress = 0.1840202

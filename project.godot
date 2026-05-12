@@ -37,6 +37,7 @@ enabled=PackedStringArray("res://addons/AsepriteWizard/plugin.cfg")
 [autoload]
 
 GameState="*res://scripts/game_state.gd"
+PlayerStats="*res://scripts/player_stats.gd"
 
 [rendering]
 

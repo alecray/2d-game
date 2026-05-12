@@ -1,0 +1,85 @@
+[gd_scene format=4 uid="uid://d337xryljhtte"]
+
+[ext_resource type="Script" uid="uid://b3cemhmflih4b" path="res://scripts/characters/enemy2.gd" id="2_example"]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_4kqf7"]
+_data = PackedByteArray("AAADAAUAAAABAAAAQAAAAEAAAACqAAAAUklGRqIAAABXRUJQVlA4TJUAAAAvP8APEBcgEEiy3J9kDYFAEuf+HgsEkhz3Z3n+A/4VuIkkyZE6zlwox+clgo9HcSjePi2K5oqZfWVH9H8C9E2BpkoHEBx6IFQhGaT+fgC2nlOExILhSfKOZcnhlf0GvVNfTX1CkqLG4T+FSh20n9W/wKEH2tR+gEiG6EGtHeg5HwB+3A8MC5asT/8WfRVBsKlPqND2sQA=")
+size_override = Vector2(64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ohv41"]
+atlas = SubResource("PortableCompressedTexture2D_4kqf7")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7e8hv"]
+atlas = SubResource("PortableCompressedTexture2D_4kqf7")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1g22j"]
+atlas = SubResource("PortableCompressedTexture2D_4kqf7")
+region = Rect2(0, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ifpww"]
+atlas = SubResource("PortableCompressedTexture2D_4kqf7")
+region = Rect2(32, 32, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_cfvyt"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ohv41")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7e8hv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1g22j")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ifpww")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_trtoc"]
+size = Vector2(34, 31)
+
+[node name="Enemy2" type="CharacterBody2D" unique_id=1852499200]
+script = ExtResource("2_example")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1128824090]
+texture_filter = 3
+sprite_frames = SubResource("SpriteFrames_cfvyt")
+frame_progress = 0.8311819
+metadata/_aseprite_wizard_interface_config_ = {
+"animation_section": false,
+"layer_section": false,
+"output_section": false,
+"pending_changes": {},
+"slice_section": false
+}
+metadata/_aseprite_wizard_config_ = {
+"embed_tex": true,
+"layers": [],
+"o_ex_p": "",
+"o_folder": "",
+"o_name": "",
+"only_visible": false,
+"scale": "1.0",
+"should_round_fps": true,
+"slice": "",
+"source": "res://assets/sprites/characters/enemy2.aseprite",
+"source_uid": 7936846614657940552
+}
+metadata/_aseprite_wizard_source_file_hash_ = "214049b90bf4893d141163f06683ff5d"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=834003633]
+position = Vector2(0, -0.5)
+shape = SubResource("RectangleShape2D_trtoc")
+
+[node name="Area2D" type="Area2D" parent="." unique_id=445678903]
+
+[node name="CollisionShape2D_Area" type="CollisionShape2D" parent="Area2D" unique_id=445678904]
+position = Vector2(0, -0.5)
+shape = SubResource("RectangleShape2D_trtoc")
