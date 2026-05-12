@@ -3,6 +3,7 @@ extends Node2D
 
 const ENEMY_SCENE = preload("res://prefabs/enemies/enemy1.tscn")
 const GRASS_SCENE = preload("res://prefabs/environment/grass1.tscn")
+const WALL_SCRIPT = preload("res://scripts/environment/wall.gd")
 const BASE_SPAWN_INTERVAL = 2.0  # starting time between enemy spawns
 const MIN_SPAWN_INTERVAL = 0.25  # fastest the spawner can ever get
 const SPAWN_DISTANCE = 300.0
@@ -31,6 +32,26 @@ func _ready() -> void:
 	var spawn_area_size = Vector2(2000, 2000)
 	var spawn_area_offset = -spawn_area_size / 2
 	spawn_grass_in_area(200, spawn_area_size, spawn_area_offset)
+	spawn_ruins()
+
+func spawn_ruins() -> void:
+	var wall_sizes = [
+		Vector2(80, 20), Vector2(20, 80),
+		Vector2(48, 20), Vector2(20, 48),
+		Vector2(64, 20), Vector2(20, 64),
+	]
+	for i in 18:
+		var angle = randf() * TAU
+		var dist = randf_range(200, 900)
+		var cluster_pos = Vector2.from_angle(angle) * dist
+		for j in randi_range(2, 5):
+			var offset = Vector2(randf_range(-60, 60), randf_range(-60, 60))
+			var wall = StaticBody2D.new()
+			wall.set_script(WALL_SCRIPT)
+			wall.size = wall_sizes[randi() % wall_sizes.size()]
+			wall.rotation = randf_range(-0.2, 0.2)
+			add_child(wall)
+			wall.global_position = cluster_pos + offset
 
 func _process(delta: float) -> void:
 	spawn_timer -= delta

@@ -11,7 +11,6 @@ const FIRE_RATE = 0.1          # seconds between shots while holding the mouse b
 const MAX_AMMO = 300
 const MAX_MANA = 100
 const MAGIC_COST = 50
-const MAGIC_COOLDOWN = 30.0
 const MANA_REGEN = 5.0  # mana restored per second
 const BOB_FREQUENCY = 14.0  # cycles per second
 const BOB_AMPLITUDE = 4.0   # pixels up and down
@@ -19,10 +18,10 @@ const BOB_AMPLITUDE = 4.0   # pixels up and down
 const MagicWave = preload("res://scripts/characters/magic_wave.gd")
 
 signal health_changed(value: int)
+signal damage_taken(amount: int)
 signal ammo_changed(value: int)
 signal mana_changed(value: int)
-signal magic_ready_changed(is_ready: bool)
-
+signal magic_used(cost: int)
 var health = MAX_HEALTH:
 	set(value):
 		health = value
@@ -37,7 +36,6 @@ var mana = MAX_MANA:
 	set(value):
 		mana = value
 		mana_changed.emit(int(value))
-var magic_cooldown = 0.0
 var knockback_velocity = Vector2.ZERO  # decays each frame, applied on top of movement
 var bob_time = 0.0
 
@@ -54,10 +52,6 @@ func _physics_process(delta: float) -> void:
 	_handle_movement(delta)
 	_handle_contact_damage(delta)
 	_handle_shooting(delta)
-	var was_on_cooldown = magic_cooldown > 0
-	magic_cooldown -= delta
-	if was_on_cooldown and magic_cooldown <= 0:
-		magic_ready_changed.emit(true)
 	if mana < MAX_MANA:
 		mana = min(MAX_MANA, mana + MANA_REGEN * delta)
 
@@ -109,16 +103,16 @@ func _handle_shooting(delta: float) -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
-		if magic_cooldown <= 0 and mana >= MAGIC_COST:
+		if mana >= MAGIC_COST:
 			var wave = MagicWave.new()
 			add_sibling(wave)
 			wave.global_position = global_position
 			mana -= MAGIC_COST
-			magic_cooldown = MAGIC_COOLDOWN
-			magic_ready_changed.emit(false)
+			magic_used.emit(MAGIC_COST)
 
 func take_damage(amount: int) -> void:
 	health = max(0, health - amount)  # setter emits health_changed automatically
+	damage_taken.emit(amount)
 	FlashUtils.flash_white($Sprite2D_Player)
 	if health <= 0:
 		get_tree().change_scene_to_file("res://scenes/game_over.tscn")
