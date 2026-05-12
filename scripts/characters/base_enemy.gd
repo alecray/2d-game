@@ -206,7 +206,7 @@ func die() -> void:
 	get_parent().add_child(particles)
 	particles.global_position = global_position
 
-	queue_free()
+	queue_free.call_deferred()
 
 func _spawn_popup(text: String, color: Color) -> void:
 	var label = FloatingText.new()

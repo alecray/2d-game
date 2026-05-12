@@ -20,11 +20,11 @@ func _physics_process(delta: float) -> void:
 		modulate.a = lifetime / FADE_START
 
 	if lifetime <= 0:
-		queue_free()
+		queue_free.call_deferred()
 
 func _on_area_entered(area: Area2D) -> void:
 	if area.is_in_group("player_hitbox"):
 		var player = area.get_parent()
 		if player.has_method("take_damage"):
 			player.take_damage(DAMAGE)
-		queue_free()
+		queue_free.call_deferred()

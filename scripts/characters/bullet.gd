@@ -29,7 +29,7 @@ func _physics_process(delta: float) -> void:
 			direction = direction.bounce(result.normal)
 			bounces += 1
 		else:
-			queue_free()
+			queue_free.call_deferred()
 			return
 
 	position += direction * SPEED * delta
@@ -40,11 +40,11 @@ func _physics_process(delta: float) -> void:
 		modulate.a = lifetime / FADE_START
 
 	if lifetime <= 0:
-		queue_free()
+		queue_free.call_deferred()
 
 func _on_area_entered(area: Area2D) -> void:
 	if area.is_in_group("enemy_hitbox"):
 		var enemy = area.get_parent()
 		if enemy.has_method("take_damage"):
 			enemy.take_damage(damage)
-		queue_free()
+		queue_free.call_deferred()
