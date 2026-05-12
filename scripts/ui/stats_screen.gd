@@ -18,6 +18,7 @@ func _ready() -> void:
 		_rows[key]["button"].pressed.connect(_on_upgrade.bind(key))
 
 	$VBox/BtnPlay.pressed.connect(_on_play)
+	$VBox/BtnReset.pressed.connect(_on_reset)
 	_refresh()
 
 ## Converts a stat key like "max_health" → "RowMaxHealth" to match scene node names.
@@ -48,3 +49,7 @@ func _on_upgrade(stat: String) -> void:
 func _on_play() -> void:
 	get_node("/root/GameState").reset()
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
+
+func _on_reset() -> void:
+	_stats.reset()
+	_refresh()

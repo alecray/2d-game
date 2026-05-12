@@ -45,6 +45,12 @@ func add_xp(amount: int) -> void:
 	xp += amount
 	_save()
 
+func reset() -> void:
+	xp = 0
+	for key in levels:
+		levels[key] = 0
+	_save()
+
 # --- stat bonuses applied to player ---
 
 func health_bonus() -> int:

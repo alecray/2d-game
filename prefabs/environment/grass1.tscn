@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://cd3mpx1kjlyun" path="res://scripts/environment/grass.gd" id="1_grass_script"]
 
 [sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_pfo41"]
-_data = PackedByteArray("AAADAAUAAAABAAAAQAAAACAAAABeAAAAUklGRlYAAABXRUJQVlA4TEoAAAAvP8AHEA8wabM0L/Mf8FAUSVIzVXyTlROA+AxPrGAiK4jo/wTwXoDwmabtiKDoO2EGRcZt5Ak5qBVZIE92PGS/MzQMvaM16K3vAQ==")
+_data = PackedByteArray("AAADAAUAAAABAAAAQAAAACAAAACCAAAAUklGRnoAAABXRUJQVlA4TG0AAAAvP8AHEBcgEEjyJ5llQrFgMn+SvhQFAinOZK3nP+DegaNGkhwp15wrJKdDMRAOYr6b5noDIKL/E8AJW7f02IksyIVaB/+dWjcR+O5EJgF++zyQwkmE2gZGijmzB5EsFDu5YPYpZVrKPjIne909AA==")
 size_override = Vector2(64, 32)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_fhntt"]
@@ -30,7 +30,7 @@ animations = [{
 
 [node name="Grass1" type="AnimatedSprite2D" unique_id=1886422459]
 auto_translate_mode = 2
-texture_filter = 3
+texture_filter = 1
 sprite_frames = SubResource("SpriteFrames_iv187")
 script = ExtResource("1_grass_script")
 metadata/_aseprite_wizard_interface_config_ = {
@@ -53,4 +53,4 @@ metadata/_aseprite_wizard_config_ = {
 "source": "res://assets/sprites/environment/grass1.aseprite",
 "source_uid": 2359272718726984120
 }
-metadata/_aseprite_wizard_source_file_hash_ = "ecb744530bbb5040ca516cb98507f445"
+metadata/_aseprite_wizard_source_file_hash_ = "c4501e3d3fa384f8e21ac1b5756c2e74"

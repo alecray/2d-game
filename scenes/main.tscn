@@ -1,14 +1,40 @@
-[gd_scene format=3 uid="uid://b1jv54q3e0gbd"]
+[gd_scene format=4 uid="uid://b1jv54q3e0gbd"]
 
 [ext_resource type="Script" uid="uid://6flu7i30lmr4" path="res://scenes/main.gd" id="1_jyhfs"]
 [ext_resource type="Texture2D" uid="uid://c0gxy12jx3ry4" path="res://assets/sprites/backgrounds/background-1.png" id="1_o5qli"]
-[ext_resource type="Texture2D" uid="uid://sulbw2ssknko" path="res://assets/sprites/characters/character1.png" id="2_0wfyh"]
 [ext_resource type="Script" uid="uid://cc5lka85pb1ok" path="res://scripts/characters/player.gd" id="2_sugp2"]
 [ext_resource type="FontFile" uid="uid://d1ajy0i3e10af" path="res://assets/fonts/PressStart2P-Regular.ttf" id="3_font"]
 [ext_resource type="Script" uid="uid://de21due6jb8ri" path="res://scripts/ui/health_label.gd" id="4_hlabel"]
 [ext_resource type="Script" uid="uid://cuwtouh3ix8h7" path="res://scripts/ui/ammo_label.gd" id="5_alabel"]
 [ext_resource type="Script" uid="uid://8st331s4dgtn" path="res://scripts/ui/ui_bob.gd" id="6_uibob"]
 [ext_resource type="Script" uid="uid://65styo81avaq" path="res://scripts/ui/mana_label.gd" id="7_mlabel"]
+[ext_resource type="Script" uid="uid://7slr1jfsnvmk" path="res://scripts/ui/enemy_counter_label.gd" id="8_ecounter"]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_85g3d"]
+_data = PackedByteArray("AAADAAUAAAABAAAAQAAAACAAAACsAAAAUklGRqQAAABXRUJQVlA4TJcAAAAvP8AHED9AqIGZ9bT7mRCqURNJCvNtIAihQwv+RaCATMBCiJUQQiCdFfHNfwgC2QBj7/LOPnIH1pAkyWqFVWiFUViFUViF53/O/R/Rf7Rt24ZG1kJ9A8/4GnzLwes1mp1x5l1Ks7NAYcdqYf135gK/b1mdiUBRFQJ2Z5ijs90/hlEpRnF0JgJfg9mZCfucDdidmbDvq+kAAA==")
+size_override = Vector2(64, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_choun"]
+atlas = SubResource("PortableCompressedTexture2D_85g3d")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ya4ey"]
+atlas = SubResource("PortableCompressedTexture2D_85g3d")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_eb6dy"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_choun")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ya4ey")
+}],
+"loop": true,
+"name": &"default",
+"speed": 4.0
+}]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_o5qli"]
 size = Vector2(32, 32)
@@ -34,17 +60,44 @@ z_as_relative = false
 z_index = 10
 script = ExtResource("2_sugp2")
 
-[node name="Sprite2D_Player" type="Sprite2D" parent="CharacterBody2D_Player" unique_id=531864204]
-texture_filter = 3
+[node name="AnimatedSprite2D_Player" type="AnimatedSprite2D" parent="CharacterBody2D_Player" unique_id=31768930]
+texture_filter = 1
 texture_repeat = 1
-texture = ExtResource("2_0wfyh")
+sprite_frames = SubResource("SpriteFrames_eb6dy")
+metadata/_aseprite_wizard_interface_config_ = {
+"pending_changes": {}
+}
+metadata/_aseprite_wizard_config_ = {
+"embed_tex": true,
+"layers": [],
+"o_ex_p": "",
+"o_folder": "",
+"o_name": "",
+"only_visible": false,
+"scale": "1.0",
+"should_round_fps": true,
+"slice": "",
+"source": "res://assets/sprites/characters/character1.aseprite",
+"source_uid": 6476235641330176578
+}
+metadata/_aseprite_wizard_source_file_hash_ = "ee5d738ebdf9d7bcc50fd5a6b8c169e3"
 
 [node name="CollisionShape2D_Player" type="CollisionShape2D" parent="CharacterBody2D_Player" unique_id=290864928]
 shape = SubResource("RectangleShape2D_o5qli")
 
 [node name="Camera2D" type="Camera2D" parent="CharacterBody2D_Player" unique_id=1807067164]
 
-[node name="UI" type="Control" parent="CharacterBody2D_Player/Camera2D" unique_id=1410296028]
+[node name="HurtBox" type="Area2D" parent="CharacterBody2D_Player" unique_id=1944499096]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D_Player/HurtBox" unique_id=487606519]
+position = Vector2(0.5, 1)
+scale = Vector2(0.9890848, 0.9766374)
+shape = SubResource("RectangleShape2D_jyhfs")
+
+[node name="HUDLayer" type="CanvasLayer" parent="." unique_id=812734650]
+layer = 10
+
+[node name="UI" type="Control" parent="HUDLayer" unique_id=1410296028]
 custom_minimum_size = Vector2(680, 440)
 layout_mode = 3
 anchors_preset = 8
@@ -60,10 +113,10 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("6_uibob")
 
-[node name="Bottom_Left" type="Node2D" parent="CharacterBody2D_Player/Camera2D/UI" unique_id=2072939989]
+[node name="Bottom_Left" type="Node2D" parent="HUDLayer/UI" unique_id=2072939989]
 position = Vector2(23, 427)
 
-[node name="Label_Health" type="Label" parent="CharacterBody2D_Player/Camera2D/UI/Bottom_Left" unique_id=292366797]
+[node name="Label_Health" type="Label" parent="HUDLayer/UI/Bottom_Left" unique_id=292366797]
 offset_left = -7.0
 offset_top = -21.0
 offset_right = 41.0
@@ -72,7 +125,7 @@ theme_override_fonts/font = ExtResource("3_font")
 text = "100"
 script = ExtResource("4_hlabel")
 
-[node name="Label_Ammo" type="Label" parent="CharacterBody2D_Player/Camera2D/UI/Bottom_Left" unique_id=1397098709]
+[node name="Label_Ammo" type="Label" parent="HUDLayer/UI/Bottom_Left" unique_id=1397098709]
 offset_left = 525.0
 offset_top = -21.0
 offset_right = 573.0
@@ -82,7 +135,7 @@ theme_override_fonts/font = ExtResource("3_font")
 text = "300"
 script = ExtResource("5_alabel")
 
-[node name="Label_Mana" type="Label" parent="CharacterBody2D_Player/Camera2D/UI/Bottom_Left" unique_id=1967364529]
+[node name="Label_Mana" type="Label" parent="HUDLayer/UI/Bottom_Left" unique_id=1967364529]
 offset_left = 584.0
 offset_top = -21.0
 offset_right = 632.0
@@ -92,9 +145,19 @@ theme_override_fonts/font = ExtResource("3_font")
 text = "100"
 script = ExtResource("7_mlabel")
 
-[node name="HurtBox" type="Area2D" parent="CharacterBody2D_Player" unique_id=1944499096]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D_Player/HurtBox" unique_id=487606519]
-position = Vector2(0.5, 1)
-scale = Vector2(0.9890848, 0.9766374)
-shape = SubResource("RectangleShape2D_jyhfs")
+[node name="Label_EnemyCount" type="Label" parent="HUDLayer/UI" unique_id=-1203139835]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -40.0
+offset_top = 8.0
+offset_right = 40.0
+offset_bottom = 28.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.35, 0.35, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 8
+text = "0"
+horizontal_alignment = 1
+script = ExtResource("8_ecounter")
