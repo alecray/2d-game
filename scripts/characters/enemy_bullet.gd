@@ -13,7 +13,17 @@ func _ready() -> void:
 	area_entered.connect(_on_area_entered)
 
 func _physics_process(delta: float) -> void:
-	position += direction * SPEED * delta
+	var motion = direction * SPEED * delta
+	var space = get_world_2d().direct_space_state
+	var query = PhysicsRayQueryParameters2D.create(global_position, global_position + motion)
+	query.exclude = [get_rid()]
+	query.collide_with_areas = false
+	var result = space.intersect_ray(query)
+	if result and result.collider is StaticBody2D:
+		queue_free.call_deferred()
+		return
+
+	position += motion
 	lifetime -= delta
 
 	if lifetime < FADE_START:

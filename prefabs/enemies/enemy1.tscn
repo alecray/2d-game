@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://y6ipi17mh0uk" path="res://scripts/characters/enemy.gd" id="2_example"]
 
 [sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_6scm5"]
-_data = PackedByteArray("AAADAAUAAAABAAAAQAAAACAAAACCAAAAUklGRnoAAABXRUJQVlA4TG4AAAAvP8AHEBcgEEhxKCstEEhi2V9hN4FAEtT+UBPMf0D1BwaRJDWaTxLwg4S4It6/A+KBgoj+CwiKDPCDZcE1OkkXFI2XE7yrwtdfTCiXFwbjZk0U6WK8GHyU32LcmEwvpwD0ly2yANgQxstxYY3dAA==")
+_data = PackedByteArray("AAADAAUAAAABAAAAQAAAACAAAADuAAAAUklGRuYAAABXRUJQVlA4TNoAAAAvP8AHED9AJmDh1MC9BPrXUUQNRQHIQLrooov4vjvVtG0EdexUNh/Y43rzHwL8PzSTUkNkovrAcSRJjtLItzRg6UN8TziAcmEdQBmA/69VPew5ENF/Rm7bRmK3mZudZ8D7BbLlPSzLc5rjWLLtaDQUDYCaQxVE20xTINUclCEQczCRPRNwMYmLKcyey+gb6Dlohp6MGNcUgeypWXoQ0e9ch63HqYq2CfoZjD0SZO5kctntubnOdQ9N9DD5IwdWk/hnlqzMYMpZXgNlTul50jm1+jkeAh71c2DsBQ==")
 size_override = Vector2(64, 32)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_trtoc"]
@@ -35,12 +35,11 @@ size = Vector2(34, 31)
 script = ExtResource("2_example")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1128824089]
-texture_filter = 3
+texture_filter = 1
 sprite_frames = SubResource("SpriteFrames_t61mr")
-frame_progress = 0.1840202
 metadata/_aseprite_wizard_interface_config_ = {
 "animation_section": false,
-"layer_section": false,
+"layer_section": true,
 "output_section": false,
 "pending_changes": {},
 "slice_section": false
@@ -58,7 +57,7 @@ metadata/_aseprite_wizard_config_ = {
 "source": "res://assets/sprites/characters/enemy1.aseprite",
 "source_uid": 2438272833221532745
 }
-metadata/_aseprite_wizard_source_file_hash_ = "772aed2f99fe8c2b6a8fba5438cd5e71"
+metadata/_aseprite_wizard_source_file_hash_ = "d77b43dc8c184489e6f7975107acb13e"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=834003632]
 position = Vector2(0, -0.5)
@@ -69,4 +68,3 @@ shape = SubResource("RectangleShape2D_trtoc")
 [node name="CollisionShape2D_Area" type="CollisionShape2D" parent="Area2D" unique_id=445678902]
 position = Vector2(0, -0.5)
 shape = SubResource("RectangleShape2D_trtoc")
-

@@ -5,7 +5,7 @@ var _poly: PackedVector2Array
 var _uvs: PackedVector2Array
 
 const EDGE_ROUGHNESS = 4.0
-const EDGE_SEGMENTS = 4
+const EDGE_SEGMENTS = 1
 const TILE_SIZE = 32.0  # world units one full texture tile covers — match your texture's pixel size
 
 var texture: Texture2D  # set by main.gd after instantiation; falls back to solid gray if null

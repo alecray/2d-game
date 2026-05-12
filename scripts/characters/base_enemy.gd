@@ -20,6 +20,8 @@ const RAGE_DURATION = 1.5           # seconds the enemy charges at boosted speed
 const RAGE_SPEED_MULTIPLIER = 2.0   # speed multiplier applied during rage
 const AMMO_DROP_CHANCE = 0.1        # roll below this → drop ammo on death
 const HEALTH_DROP_CHANCE = 0.2      # roll below this (but above ammo) → drop health on death
+const CRATE_DROP_CHANCE = 0.025     # independent 2.5% chance to also drop an upgrade crate
+const CRATE_SCENE = preload("res://prefabs/crate.tscn")
 const XP_REWARD = 5                 # XP granted to the player on death
 const ELITE_XP_REWARD = 15         # XP for elite (pack) enemies
 const RARE_XP_REWARD = 50          # XP for rare (golden) enemies
@@ -38,10 +40,14 @@ var rage_timer = 0.0   # while > 0, enemy charges at boosted speed
 var pack_id = -1       # shared ID for elite pack-mates; -1 means no pack
 var is_invisible = false
 var is_rare = false
-
+var aura_color: Color = Color.TRANSPARENT
+var _aura_time: float = 0.0
 var direction = Vector2.ZERO    # current movement direction (unit vector)
 var time_until_change = 0.0     # countdown until the next random direction pick
 var current_speed = 0.0         # smoothly interpolated actual speed; set in _ready
+var knockback_velocity = Vector2.ZERO
+
+const KNOCKBACK_FRICTION = 14.0
 
 func _ready() -> void:
 	current_speed = SPEED
@@ -86,7 +92,11 @@ func _physics_process(delta: float) -> void:
 		current_speed = move_toward(current_speed, SPEED, ACCELERATION * delta)
 
 	rage_timer -= delta
-	velocity = direction * current_speed + _get_separation()
+	if aura_color.a > 0.0:
+		_aura_time += delta
+		queue_redraw()
+	velocity = direction * current_speed + _get_separation() + knockback_velocity
+	knockback_velocity = knockback_velocity.lerp(Vector2.ZERO, delta * KNOCKBACK_FRICTION)
 	move_and_slide()
 
 	# flip sprite to face the direction of travel
@@ -131,6 +141,13 @@ func take_damage(amount: int) -> void:
 
 ## Draws a health bar above the sprite — only visible after the enemy has taken damage.
 func _draw() -> void:
+	if aura_color.a > 0.0:
+		var pulse = sin(_aura_time * 3.0) * 0.35 + 0.65
+		for i in 4:
+			var ring_alpha = (1.0 - float(i) / 4.0) * pulse * 0.7
+			var ring_radius = 18.0 + float(i) * 8.0
+			draw_circle(Vector2.ZERO, ring_radius, Color(aura_color.r, aura_color.g, aura_color.b, ring_alpha))
+
 	if health >= max_health:
 		return
 	var bar_width = HEALTH_BAR_WIDTH
@@ -142,6 +159,14 @@ func _draw() -> void:
 	var col = Color(0.2, 0.85, 0.2) if health > max_health * 0.5 else Color(0.9, 0.2, 0.2)
 	draw_rect(Rect2(bar_pos, Vector2(fill, bar_height)), col)
 
+func apply_knockback(push: Vector2) -> void:
+	knockback_velocity += push
+
+func apply_difficulty(scale: float) -> void:
+	max_health = int(max_health * scale)
+	health = max_health
+	DAMAGE = maxi(1, int(DAMAGE * scale))
+
 ## Override in subclasses to return the base sprite colour used for death particles.
 func get_death_color() -> Color:
 	return Color(0.25, 0.75, 0.25)
@@ -149,6 +174,7 @@ func get_death_color() -> Color:
 ## Upgrades this enemy to rare tier: enormous, slow, very tough, and covered in gold.
 func make_rare() -> void:
 	is_rare = true
+	aura_color = Color(1.0, 0.75, 0.05)
 	var mat = ShaderMaterial.new()
 	mat.shader = preload("res://assets/shaders/gold_glow.gdshader")
 	$AnimatedSprite2D.material = mat
@@ -162,6 +188,7 @@ func make_rare() -> void:
 
 ## Upgrades this enemy to elite tier: bigger, faster, tougher, and visually distinct.
 func make_elite() -> void:
+	aura_color = Color(0.1, 0.45, 1.0)
 	var mat = ShaderMaterial.new()
 	mat.shader = preload("res://assets/shaders/blue_glow.gdshader")
 	$AnimatedSprite2D.material = mat
@@ -191,10 +218,10 @@ func die() -> void:
 	if player:
 		if drop_type == DropType.AMMO:
 			player.ammo = player.MAX_AMMO
-			_spawn_popup("AMMO!", Color(1, 1, 0, 1))
+			_spawn_popup("+ammo", Color(1, 1, 0, 1))
 		elif drop_type == DropType.HEALTH:
 			player.health = player.MAX_HEALTH
-			_spawn_popup("HEALTH!", Color(0, 1, 0, 1))
+			_spawn_popup("+health", Color(0, 1, 0, 1))
 
 	# color and particle count scale with enemy tier
 	var p_color = Color(1.0, 0.75, 0.05) if is_rare else (Color(0.1, 0.45, 1.0) if pack_id != -1 else get_death_color())
@@ -205,6 +232,11 @@ func die() -> void:
 	particles.base_amount = p_amount
 	get_parent().add_child(particles)
 	particles.global_position = global_position
+
+	if randf() < CRATE_DROP_CHANCE:
+		var crate = CRATE_SCENE.instantiate()
+		get_parent().add_child(crate)
+		crate.global_position = global_position
 
 	queue_free.call_deferred()
 

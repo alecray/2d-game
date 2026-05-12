@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://dfp24gm0dsvuc"]
+
+[ext_resource type="Script" path="res://scripts/effects/crate.gd" id="1_crate"]
+[ext_resource type="Texture2D" uid="uid://bk2fdw8yxrfin" path="res://assets/sprites/environment/crate.png" id="2_d6wc2"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_crate"]
+radius = 12.0
+
+[node name="Crate" type="Area2D" unique_id=1388758284]
+script = ExtResource("1_crate")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=284669956]
+texture_filter = 3
+texture = ExtResource("2_d6wc2")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1432495574]
+shape = SubResource("CircleShape2D_crate")
