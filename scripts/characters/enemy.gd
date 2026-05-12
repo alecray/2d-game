@@ -9,12 +9,24 @@ const DETECTION_RANGE = 200.0 # how close the player has to be before the enemy 
 const DAMAGE = 10              # damage dealt to player on contact
 const SEPARATION_RADIUS = 28.0 # enemies start pushing apart within this distance
 const SEPARATION_FORCE = 80.0  # strength of that push
+const FloatingText = preload("res://scripts/utils/floating_text.gd")
+
+# each enemy is assigned one drop type on spawn — 30% ammo, 30% health, 40% nothing
+enum DropType { NONE, AMMO, HEALTH }
+var drop_type = DropType.NONE
 
 var direction = Vector2.ZERO  # which way the enemy is currently moving
 var time_until_change = 0.0   # countdown until the next random direction change
 var current_speed = SPEED     # tracks speed as it smoothly ramps up/down
 
 func _ready() -> void:
+	# randomly assign this enemy's drop at spawn
+	var roll = randf()
+	if roll < 0.1:
+		drop_type = DropType.AMMO
+	elif roll < 0.2:
+		drop_type = DropType.HEALTH
+
 	# start the direction change timer at a random value so not all enemies turn at the same time
 	time_until_change = randf_range(0.5, CHANGE_DIRECTION_TIME)
 	pick_random_direction()
@@ -67,4 +79,21 @@ func pick_random_direction() -> void:
 ## Remove this enemy from the scene (called when hit by a bullet)
 func die() -> void:
 	get_node("/root/GameState").kills += 1
+	var player = get_tree().get_first_node_in_group("player")
+	if player:
+		if drop_type == DropType.AMMO:
+			player.ammo = player.MAX_AMMO
+			player.update_ammo_display()
+			_spawn_popup("AMMO!", Color(1, 1, 0, 1))
+		elif drop_type == DropType.HEALTH:
+			player.health = player.MAX_HEALTH
+			player.update_health_display()
+			_spawn_popup("HEALTH!", Color(0, 1, 0, 1))
 	queue_free()
+
+func _spawn_popup(text: String, color: Color) -> void:
+	var label = FloatingText.new()
+	label.text = text
+	label.add_theme_color_override("font_color", color)
+	get_parent().add_child(label)
+	label.global_position = global_position

@@ -8,11 +8,12 @@ const BULLET_SCENE = preload("res://prefabs/bullet.tscn")
 const KNOCKBACK_FORCE = 300.0  # how hard enemies push the player back on contact
 const BULLET_SPAWN_OFFSET = 20.0  # how far in front of the player bullets spawn
 const FIRE_RATE = 0.1          # seconds between shots while holding the mouse button
+const MAX_AMMO = 300
 
 var health = MAX_HEALTH
 var damage_cooldown = 0.0  # counts down to zero between hits
 var fire_cooldown = 0.0    # counts down to zero between shots
-var ammo = 100
+var ammo = MAX_AMMO
 var knockback_velocity = Vector2.ZERO  # decays each frame, applied on top of movement
 
 func _ready() -> void:

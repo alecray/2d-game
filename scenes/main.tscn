@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://c0gxy12jx3ry4" path="res://assets/sprites/backgrounds/background-1.png" id="1_o5qli"]
 [ext_resource type="Texture2D" uid="uid://sulbw2ssknko" path="res://assets/sprites/characters/character1.png" id="2_0wfyh"]
 [ext_resource type="Script" uid="uid://cc5lka85pb1ok" path="res://scripts/characters/player.gd" id="2_sugp2"]
+[ext_resource type="FontFile" path="res://assets/fonts/PressStart2P-Regular.ttf" id="3_font"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_o5qli"]
 size = Vector2(32, 32)
@@ -55,11 +56,13 @@ offset_top = 12.0
 offset_right = 68.0
 offset_bottom = 35.0
 theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_fonts/font = ExtResource("3_font")
 
 [node name="Label_Health" type="Label" parent="CharacterBody2D_Player" unique_id=292366797]
 offset_top = -40.0
 offset_right = 40.0
 text = "100"
+theme_override_fonts/font = ExtResource("3_font")
 
 [node name="HurtBox" type="Area2D" parent="CharacterBody2D_Player" unique_id=1944499096]
 

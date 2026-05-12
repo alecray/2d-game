@@ -4,10 +4,10 @@ extends Node2D
 const ENEMY_SCENE = preload("res://prefabs/enemies/enemy1.tscn")
 const GRASS_SCENE = preload("res://prefabs/environment/grass1.tscn")
 const BASE_SPAWN_INTERVAL = 2.0  # starting time between enemy spawns
-const MIN_SPAWN_INTERVAL = 0.01  # fastest the spawner can ever get
-const SPAWN_INTERVAL_REDUCTION = 0.05  # seconds shaved off per kill
+const MIN_SPAWN_INTERVAL = 0.25  # fastest the spawner can ever get
 const SPAWN_DISTANCE = 300.0
-const KILLS_PER_EXTRA_ENEMY = 10  # one extra enemy spawned per tick for every N kills
+const KILLS_PER_EXTRA_ENEMY = 30  # one extra enemy spawned per tick for every N kills
+const MAX_ENEMIES = 100
 
 @onready var player = $CharacterBody2D_Player
 @onready var grass_parent = $GrassParent
@@ -15,7 +15,8 @@ var spawn_timer = 0.0
 
 func _get_spawn_interval() -> float:
 	var kills = get_node("/root/GameState").kills
-	return max(MIN_SPAWN_INTERVAL, BASE_SPAWN_INTERVAL - kills * SPAWN_INTERVAL_REDUCTION)
+	# logarithmic curve: drops quickly in early kills, then levels off into a steady rate
+	return max(MIN_SPAWN_INTERVAL, BASE_SPAWN_INTERVAL / (1.0 + log(kills + 1)))
 
 func _get_spawn_count() -> int:
 	var kills = get_node("/root/GameState").kills
@@ -30,8 +31,10 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	spawn_timer -= delta
 	if spawn_timer <= 0:
+		var current = get_tree().get_nodes_in_group("enemy").size()
 		for i in _get_spawn_count():
-			spawn_enemy()
+			if current + i < MAX_ENEMIES:
+				spawn_enemy()
 		spawn_timer = _get_spawn_interval()
 
 ## Spawns an enemy at random distance/angle from player
