@@ -1,0 +1,77 @@
+[gd_scene format=3 uid="uid://dh3f8bv2nq6px"]
+
+[ext_resource type="Script" path="res://scripts/ui/shop_entry.gd" id="1_sescript"]
+[ext_resource type="FontFile" uid="uid://d1ajy0i3e10af" path="res://assets/fonts/PressStart2P-Regular.ttf" id="2_font"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.12, 0.12, 0.18, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.3, 0.3, 0.5, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+
+[node name="ShopEntry" type="PanelContainer"]
+custom_minimum_size = Vector2(480, 0)
+script = ExtResource("1_sescript")
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="HBox" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="GunSprite" type="TextureRect" parent="HBox"]
+custom_minimum_size = Vector2(83, 52)
+layout_mode = 2
+texture_filter = 1
+stretch_mode = 5
+
+[node name="InfoBox" type="VBoxContainer" parent="HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NameLabel" type="Label" parent="HBox/InfoBox"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 14
+text = "GUN NAME"
+
+[node name="DescLabel" type="Label" parent="HBox/InfoBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 9
+text = "Gun description"
+
+[node name="BuyBox" type="VBoxContainer" parent="HBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="PriceLabel" type="Label" parent="HBox/BuyBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.78, 0.1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 10
+text = "0 coins"
+horizontal_alignment = 1
+
+[node name="BtnBuy" type="Button" parent="HBox/BuyBox"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 11
+text = "BUY"
+
+[node name="BtnEquip" type="Button" parent="HBox/BuyBox"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 11
+text = "EQUIP"
+visible = false

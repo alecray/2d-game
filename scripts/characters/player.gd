@@ -6,7 +6,7 @@ var MAX_HEALTH = 100
 const DAMAGE_COOLDOWN = 0.5    # seconds of invincibility after getting hit
 const BULLET_SCENE = preload("res://prefabs/bullet.tscn")
 const KNOCKBACK_FORCE = 1200.0  # how hard enemies push the player back on contact
-const BULLET_SPAWN_OFFSET = 20.0  # how far in front of the player bullets spawn
+const GUN_TIP_LOCAL = Vector2(40.0, 0.0)  # tip of the 64px barrel in gun local space (offset 8 + half-width 32)
 var FIRE_RATE = 0.1          # seconds between shots while holding the mouse button
 var MAX_AMMO = 300
 var bullet_damage = 5        # base bullet damage, boosted by PlayerStats
@@ -16,7 +16,12 @@ var bullet_piercing = false
 var bullet_explosive = false
 var bullet_homing = false
 var bullet_count = 1
+var bullet_split = false
+var bullet_color = Color.WHITE     # gun types will override this
+var _shoot_mode: String = "bullet"
+var _laser: Node2D = null
 const BULLET_SPREAD_ANGLE = 0.22  # ~12.5 degrees, used for Payload spread
+const BULLET_SPLIT_ANGLE = 0.10   # ~5.7 degrees between the two Split bullets
 const MAX_MANA = 100
 const MAGIC_COST = 50
 const MANA_REGEN = 5.0  # mana restored per second
@@ -31,6 +36,7 @@ const WORLD_BOUNDS = Vector2(1576, 1440)  # half-extents of the background sprit
 const MagicWave = preload("res://scripts/characters/magic_wave.gd")
 const PlayerShadow = preload("res://scripts/characters/player_shadow.gd")
 const BloodParticles = preload("res://scripts/effects/blood_particles.gd")
+const LaserBeam = preload("res://scripts/effects/laser_beam.gd")
 
 const SHADOW_OFFSET_Y = 20.0   # pixels below the player centre where the shadow sits
 const SHADOW_BASE_ALPHA = 0.4  # opacity at rest
@@ -61,9 +67,11 @@ var mana = MAX_MANA:
 		mana_changed.emit(int(value))
 var knockback_velocity = Vector2.ZERO  # decays each frame, applied on top of movement
 var aim_direction = Vector2.RIGHT      # current aim angle, rate-limited toward the mouse
+const GUN_ROTATION_OFFSET = 0.0
 var bob_time = 0.0
 var idle_time = 0.0
 var _shadow: Node2D
+@onready var _gun: Sprite2D = $Gun
 
 func _ready() -> void:
 	add_to_group("player")
@@ -96,6 +104,17 @@ func _ready() -> void:
 	ammo = MAX_AMMO
 	bullet_damage += stats.damage_bonus()
 
+	# apply equipped gun stats on top of persistent upgrades
+	var gun = PlayerStats.GUN_DEFS.get(stats.equipped_gun, PlayerStats.GUN_DEFS["gun1"])
+	FIRE_RATE = maxf(0.05, FIRE_RATE * gun["fire_rate_mult"])
+	bullet_damage = maxi(1, int(bullet_damage * gun["damage_mult"]))
+	bullet_count = gun["bullet_count"]
+	bullet_speed_multiplier = gun["speed_mult"]
+	bullet_extra_bounces = gun["bounces"]
+	bullet_color = gun["color"]
+	_shoot_mode = gun.get("shoot_mode", "bullet")
+	if gun["sprite"] != "":
+		_gun.texture = load(gun["sprite"])
 
 
 func _physics_process(delta: float) -> void:
@@ -111,6 +130,8 @@ func _update_aim(delta: float) -> void:
 	var diff = angle_difference(aim_direction.angle(), target.angle())
 	var max_turn = AIM_TURN_SPEED * delta
 	aim_direction = Vector2.from_angle(aim_direction.angle() + clampf(diff, -max_turn, max_turn))
+	_gun.rotation = aim_direction.angle() + GUN_ROTATION_OFFSET
+	_gun.flip_v = aim_direction.x < 0
 
 func _handle_movement(delta: float) -> void:
 	# build a direction vector from whichever WASD keys are held
@@ -164,10 +185,31 @@ func _handle_contact_damage(delta: float) -> void:
 
 func _handle_shooting(delta: float) -> void:
 	fire_cooldown -= delta
-	# fire continuously while the mouse button is held, once per FIRE_RATE seconds
-	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and fire_cooldown <= 0:
-		shoot_bullet()
-		fire_cooldown = FIRE_RATE
+	var firing := Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+
+	if _shoot_mode == "laser":
+		if firing and ammo > 0:
+			if _laser == null:
+				_laser = LaserBeam.new()
+				add_sibling(_laser)
+			_laser.global_position = _gun.global_transform * GUN_TIP_LOCAL
+			_laser.direction = aim_direction
+			_laser.damage = bullet_damage
+			if fire_cooldown <= 0:
+				ammo -= 1
+				fire_cooldown = FIRE_RATE
+		else:
+			_stop_laser()
+	else:
+		_stop_laser()
+		if firing and fire_cooldown <= 0:
+			shoot_bullet()
+			fire_cooldown = FIRE_RATE
+
+func _stop_laser() -> void:
+	if _laser:
+		_laser.queue_free()
+		_laser = null
 
 
 func _input(event: InputEvent) -> void:
@@ -237,18 +279,26 @@ func shoot_bullet() -> void:
 	var spread_angles = [0.0]
 	if bullet_count >= 3:
 		spread_angles = [-BULLET_SPREAD_ANGLE, 0.0, BULLET_SPREAD_ANGLE]
+	if bullet_split:
+		var split := []
+		for a in spread_angles:
+			split.append(a - BULLET_SPLIT_ANGLE)
+			split.append(a + BULLET_SPLIT_ANGLE)
+		spread_angles = split
 
 	for spread in spread_angles:
 		var fire_dir = aim_direction.rotated(spread)
 		var bullet = BULLET_SCENE.instantiate()
 		bullet.direction = fire_dir
-		bullet.global_position = global_position + fire_dir * BULLET_SPAWN_OFFSET
+		bullet.global_position = _gun.global_transform * GUN_TIP_LOCAL
 		bullet.damage = bullet_damage
 		bullet.speed = bullet.SPEED * bullet_speed_multiplier
 		bullet.max_bounces = bullet.MAX_BOUNCES + bullet_extra_bounces
 		bullet.piercing = bullet_piercing
 		bullet.explosive = bullet_explosive
 		bullet.homing = bullet_homing
+		bullet.bullet_color = bullet_color
 		add_sibling(bullet)
 
 	ammo -= 1  # setter emits ammo_changed automatically
+

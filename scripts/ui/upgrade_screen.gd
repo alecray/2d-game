@@ -16,6 +16,8 @@ const UPGRADES := [
 	{"id": "penetrator",  "name": "PENETRATOR",  "desc": "Bullets pierce\nthrough enemies"},
 	{"id": "payload",     "name": "PAYLOAD",     "desc": "Fire 3 bullets\nin a spread"},
 	{"id": "velocity",    "name": "VELOCITY",    "desc": "+60% bullet\nspeed"},
+	{"id": "ricochet",    "name": "RICOCHET",    "desc": "Bullets bounce\noff walls"},
+	{"id": "split",       "name": "SPLIT",       "desc": "Each bullet\nforks into two"},
 ]
 
 func _ready() -> void:
@@ -66,3 +68,7 @@ func _apply(player: Node, upgrade: Dictionary) -> void:
 			player.bullet_count = 3
 		"velocity":
 			player.bullet_speed_multiplier = minf(player.bullet_speed_multiplier * 1.6, 3.0)
+		"ricochet":
+			player.bullet_extra_bounces += 3
+		"split":
+			player.bullet_split = true

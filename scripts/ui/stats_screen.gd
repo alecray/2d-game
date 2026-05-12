@@ -19,6 +19,7 @@ func _ready() -> void:
 		}
 		_rows[key]["button"].pressed.connect(_on_upgrade.bind(key))
 
+	$VBox/BtnShop.pressed.connect(_on_shop)
 	$VBox/BtnPlay.pressed.connect(_on_play)
 	$VBox/BtnReset.pressed.connect(_on_reset)
 	_refresh()
@@ -48,6 +49,9 @@ func _refresh() -> void:
 func _on_upgrade(stat: String) -> void:
 	_stats.spend_xp(stat)
 	_refresh()
+
+func _on_shop() -> void:
+	get_tree().change_scene_to_file("res://scenes/shop.tscn")
 
 func _on_play() -> void:
 	get_node("/root/GameState").reset()
