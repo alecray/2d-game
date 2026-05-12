@@ -12,8 +12,10 @@ const MAX_AMMO = 300
 const MAX_MANA = 100
 const MAGIC_COST = 50
 const MANA_REGEN = 5.0  # mana restored per second
-const BOB_FREQUENCY = 14.0  # cycles per second
-const BOB_AMPLITUDE = 4.0   # pixels up and down
+const BOB_FREQUENCY = 14.0   # cycles per second
+const BOB_AMPLITUDE = 4.0    # pixels up and down
+const IDLE_FREQUENCY = 1.5   # gentle breathing pace while standing still
+const IDLE_AMPLITUDE = 2.0   # subtle float distance in pixels
 
 const MagicWave = preload("res://scripts/characters/magic_wave.gd")
 
@@ -38,6 +40,7 @@ var mana = MAX_MANA:
 		mana_changed.emit(int(value))
 var knockback_velocity = Vector2.ZERO  # decays each frame, applied on top of movement
 var bob_time = 0.0
+var idle_time = 0.0
 
 func _ready() -> void:
 	add_to_group("player")
@@ -79,11 +82,14 @@ func _handle_movement(delta: float) -> void:
 		$Sprite2D_Player.flip_h = input_direction.x < 0
 
 	if input_direction != Vector2.ZERO:
+		idle_time = 0.0
 		bob_time += delta * BOB_FREQUENCY
 		$Sprite2D_Player.position.y = abs(sin(bob_time)) * BOB_AMPLITUDE
 	else:
 		bob_time = 0.0
-		$Sprite2D_Player.position.y = lerpf($Sprite2D_Player.position.y, 0.0, delta * 10.0)
+		idle_time += delta * IDLE_FREQUENCY
+		var idle_y = sin(idle_time) * IDLE_AMPLITUDE
+		$Sprite2D_Player.position.y = lerpf($Sprite2D_Player.position.y, idle_y, delta * 5.0)
 
 func _handle_contact_damage(delta: float) -> void:
 	damage_cooldown -= delta

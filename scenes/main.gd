@@ -8,6 +8,8 @@ const ENEMY2_CHANCE = 0.25  # probability any given enemy spawns as enemy2
 const ENEMY3_CHANCE = 0.20  # probability any given enemy spawns as enemy3
 const GRASS_SCENE = preload("res://prefabs/environment/grass1.tscn")
 const WALL_SCRIPT = preload("res://scripts/environment/wall.gd")
+# Drop your tileable stone texture at this path to apply it to all walls
+const WALL_TEXTURE = "res://assets/sprites/environment/wall1.png"
 const BASE_SPAWN_INTERVAL = 2.0  # starting time between enemy spawns
 const MIN_SPAWN_INTERVAL = 0.25  # fastest the spawner can ever get
 const SPAWN_DISTANCE = 80.0  # extra buffer beyond the screen edge to spawn enemies
@@ -63,6 +65,9 @@ func spawn_ruins() -> void:
 			wall.rotation = randf_range(-WALL_ROTATION_RANGE, WALL_ROTATION_RANGE)
 			add_child(wall)
 			wall.global_position = cluster_pos + offset
+			var tex = load(WALL_TEXTURE)
+			if tex:
+				wall.texture = tex
 
 func _process(delta: float) -> void:
 	spawn_timer -= delta

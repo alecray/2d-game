@@ -2,17 +2,24 @@ extends StaticBody2D
 
 var size = Vector2(80, 20)
 var _poly: PackedVector2Array
+var _uvs: PackedVector2Array
 
 const EDGE_ROUGHNESS = 4.0
 const EDGE_SEGMENTS = 4
+const TILE_SIZE = 32.0  # world units one full texture tile covers — match your texture's pixel size
+
+var texture: Texture2D  # set by main.gd after instantiation; falls back to solid gray if null
 
 func _ready() -> void:
+	texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 	var shape = RectangleShape2D.new()
 	shape.size = size
 	var col = CollisionShape2D.new()
 	col.shape = shape
 	add_child(col)
 	_poly = _build_rough_poly(size)
+	_uvs = _build_uvs(_poly)
 
 ## Builds a rectangle polygon with gently bowed, irregular edges for a worn-stone look.
 ## Each edge gets 3 intermediate points offset by a sine-weighted random amount so the
@@ -39,8 +46,15 @@ func _build_rough_poly(s: Vector2) -> PackedVector2Array:
 			pts.append(mid + n * bow)
 	return pts
 
+## Maps each polygon vertex to a UV coordinate so the texture tiles across the surface.
+func _build_uvs(poly: PackedVector2Array) -> PackedVector2Array:
+	var uvs = PackedVector2Array()
+	for point in poly:
+		uvs.append(point / TILE_SIZE)
+	return uvs
+
 func _draw() -> void:
-	draw_colored_polygon(_poly, Color(0.20, 0.20, 0.20))
-	var outline = PackedVector2Array(_poly)
-	outline.append(_poly[0])
-	draw_polyline(outline, Color(0.04, 0.04, 0.04), 2.0)
+	if texture:
+		draw_colored_polygon(_poly, Color.WHITE, _uvs, texture)
+	else:
+		draw_colored_polygon(_poly, Color(0.20, 0.20, 0.20))
