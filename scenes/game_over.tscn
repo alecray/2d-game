@@ -1,0 +1,41 @@
+[gd_scene format=3 uid="uid://game_over_scene"]
+
+[ext_resource type="Script" path="res://scripts/game_over.gd" id="1_goscript"]
+
+[node name="GameOver" type="Control"]
+script = ExtResource("1_goscript")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="ColorRect" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.05, 0.05, 0.05, 1)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -120.0
+offset_top = -70.0
+offset_right = 120.0
+offset_bottom = 70.0
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Label_Title" type="Label" parent="VBoxContainer"]
+text = "GAME OVER"
+horizontal_alignment = 1
+
+[node name="Label_Score" type="Label" parent="VBoxContainer"]
+text = "Enemies killed: 0"
+horizontal_alignment = 1
+
+[node name="Button_Restart" type="Button" parent="VBoxContainer"]
+text = "Play Again"
+
+[connection signal="pressed" from="VBoxContainer/Button_Restart" to="." method="_on_restart_pressed"]

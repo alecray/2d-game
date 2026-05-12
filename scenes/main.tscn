@@ -6,18 +6,24 @@
 [ext_resource type="Script" uid="uid://cc5lka85pb1ok" path="res://scripts/characters/player.gd" id="2_sugp2"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_o5qli"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_jyhfs"]
+size = Vector2(43, 42)
 
 [node name="Game" type="Node2D" unique_id=370655090]
 script = ExtResource("1_jyhfs")
 
-[node name="CanvasLayer_Background" type="CanvasLayer" parent="." unique_id=1594313497]
-layer = -20
-
-[node name="Sprite2D" type="Sprite2D" parent="CanvasLayer_Background" unique_id=1544519986]
+[node name="Sprite2D_Background" type="Sprite2D" parent="." unique_id=1544519986]
+z_index = -20
 texture_filter = 3
 texture_repeat = 2
-position = Vector2(360, 360)
+scale = Vector2(4.379, 4)
 texture = ExtResource("1_o5qli")
+
+[node name="GrassParent" type="Node2D" parent="." unique_id=934875925]
+z_index = 1
+z_as_relative = false
 
 [node name="CharacterBody2D_Player" type="CharacterBody2D" parent="." unique_id=1295080485]
 z_index = 10
@@ -26,8 +32,38 @@ script = ExtResource("2_sugp2")
 [node name="Sprite2D_Player" type="Sprite2D" parent="CharacterBody2D_Player" unique_id=531864204]
 texture_filter = 3
 texture_repeat = 1
-position = Vector2(188, 161)
 texture = ExtResource("2_0wfyh")
 
 [node name="CollisionShape2D_Player" type="CollisionShape2D" parent="CharacterBody2D_Player" unique_id=290864928]
 shape = SubResource("RectangleShape2D_o5qli")
+
+[node name="Camera2D" type="Camera2D" parent="CharacterBody2D_Player" unique_id=1807067164]
+
+[node name="UI" type="Control" parent="CharacterBody2D_Player/Camera2D" unique_id=1410296028]
+custom_minimum_size = Vector2(650, 400)
+layout_mode = 3
+anchors_preset = 0
+offset_left = -322.0
+offset_top = -199.0
+offset_right = 328.0
+offset_bottom = 201.0
+
+[node name="Label_Ammo" type="Label" parent="CharacterBody2D_Player/Camera2D/UI" unique_id=1397098709]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 12.0
+offset_right = 68.0
+offset_bottom = 35.0
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+
+[node name="Label_Health" type="Label" parent="CharacterBody2D_Player" unique_id=292366797]
+offset_top = -40.0
+offset_right = 40.0
+text = "100"
+
+[node name="HurtBox" type="Area2D" parent="CharacterBody2D_Player" unique_id=1944499096]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D_Player/HurtBox" unique_id=487606519]
+position = Vector2(0.5, 1)
+scale = Vector2(0.9890848, 0.9766374)
+shape = SubResource("RectangleShape2D_jyhfs")
