@@ -63,3 +63,10 @@ metadata/_aseprite_wizard_source_file_hash_ = "772aed2f99fe8c2b6a8fba5438cd5e71"
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=834003632]
 position = Vector2(0, -0.5)
 shape = SubResource("RectangleShape2D_trtoc")
+
+[node name="Area2D" type="Area2D" parent="." unique_id=445678901]
+
+[node name="CollisionShape2D_Area" type="CollisionShape2D" parent="Area2D" unique_id=445678902]
+position = Vector2(0, -0.5)
+shape = SubResource("RectangleShape2D_trtoc")
+
