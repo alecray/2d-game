@@ -3,15 +3,31 @@ extends Node2D
 
 const ENEMY_SCENE = preload("res://prefabs/enemies/enemy1.tscn")
 const GRASS_SCENE = preload("res://prefabs/environment/grass1.tscn")
-const SPAWN_INTERVAL = 2.0
+const BASE_SPAWN_INTERVAL = 2.0  # starting time between enemy spawns
+const MIN_SPAWN_INTERVAL = 0.25  # fastest the spawner can ever get
 const SPAWN_DISTANCE = 300.0
+const KILLS_PER_EXTRA_ENEMY = 30  # one extra enemy spawned per tick for every N kills
+const CLUSTER_SPREAD = 40.0       # how far apart enemies in the same cluster can spawn
+const MAX_ENEMIES = 100
+const ELITE_CHANCE = 0.15   # 15% chance a cluster spawns as elite
+const ELITE_PACK_SIZE = 3   # elite clusters always spawn this many
 
 @onready var player = $CharacterBody2D_Player
 @onready var grass_parent = $GrassParent
 var spawn_timer = 0.0
+var _next_pack_id = 0
+
+func _get_spawn_interval() -> float:
+	var kills = get_node("/root/GameState").kills
+	# logarithmic curve: drops quickly in early kills, then levels off into a steady rate
+	return max(MIN_SPAWN_INTERVAL, BASE_SPAWN_INTERVAL / (1.0 + log(kills + 1)))
+
+func _get_spawn_count() -> int:
+	var kills = get_node("/root/GameState").kills
+	return 1 + kills / KILLS_PER_EXTRA_ENEMY
 
 func _ready() -> void:
-	spawn_timer = SPAWN_INTERVAL
+	spawn_timer = BASE_SPAWN_INTERVAL
 	var spawn_area_size = Vector2(2000, 2000)
 	var spawn_area_offset = -spawn_area_size / 2
 	spawn_grass_in_area(200, spawn_area_size, spawn_area_offset)
@@ -19,19 +35,38 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	spawn_timer -= delta
 	if spawn_timer <= 0:
-		spawn_enemy()
-		spawn_timer = SPAWN_INTERVAL
+		var current = get_tree().get_nodes_in_group("enemy").size()
+		var count = _get_spawn_count()
+		if current < MAX_ENEMIES:
+			# roll elite once per cluster — elites always come in a fixed pack size
+			var is_elite = randf() < ELITE_CHANCE
+			var cluster_origin = _get_cluster_origin()
+			var spawn_count = ELITE_PACK_SIZE if is_elite else count
+			var pack_id = -1
+			if is_elite:
+				pack_id = _next_pack_id
+				_next_pack_id += 1
+			for i in spawn_count:
+				if current + i < MAX_ENEMIES:
+					spawn_enemy(cluster_origin, is_elite, pack_id)
+		spawn_timer = _get_spawn_interval()
 
-## Spawns an enemy at random distance/angle from player
-func spawn_enemy() -> void:
+## Returns a random point just outside the player's view to use as a cluster center
+func _get_cluster_origin() -> Vector2:
+	var angle = randf() * TAU
+	var distance = randf_range(SPAWN_DISTANCE * 0.8, SPAWN_DISTANCE)
+	return player.global_position + Vector2.from_angle(angle) * distance
+
+## Spawns one enemy near the given cluster origin
+func spawn_enemy(cluster_origin: Vector2, is_elite: bool = false, pack_id: int = -1) -> void:
 	var enemy = ENEMY_SCENE.instantiate()
-	var random_angle = randf() * TAU
-	var random_distance = randf_range(SPAWN_DISTANCE * 0.8, SPAWN_DISTANCE)
-	var spawn_pos = player.global_position + Vector2.from_angle(random_angle) * random_distance
-
-	enemy.global_position = spawn_pos
+	var scatter = Vector2.from_angle(randf() * TAU) * randf() * CLUSTER_SPREAD
+	enemy.global_position = cluster_origin + scatter
 	enemy.add_to_group("enemy")
 	add_child(enemy)
+	if is_elite:
+		enemy.make_elite()
+		enemy.pack_id = pack_id
 
 ## Generates grass using blue noise algorithm for natural distribution
 func spawn_grass_in_area(count: int, area_size: Vector2, area_offset: Vector2) -> void:

@@ -18,6 +18,6 @@ func _physics_process(delta: float) -> void:
 func _on_area_entered(area: Area2D) -> void:
 	if area.is_in_group("enemy_hitbox"):
 		var enemy = area.get_parent()
-		if enemy.has_method("die"):
-			enemy.die()
+		if enemy.has_method("take_damage"):
+			enemy.take_damage(5)
 		queue_free()
