@@ -58,6 +58,8 @@ func _physics_process(delta: float) -> void:
 	if direction.x != 0:
 		$AnimatedSprite2D.flip_h = direction.x < 0
 
+	_play_anim("Walk" if velocity.length() > 5.0 else "Idle")
+
 func get_death_color() -> Color:
 	return Color(0.55, 0.1, 0.85)
 

@@ -13,7 +13,7 @@ const MAPS = [
 		"spawn_table": [
 			{"scene": "res://prefabs/enemies/spider.tscn", "weight": 55},
 			{"scene": "res://prefabs/enemies/blob.tscn", "weight": 25},
-			{"scene": "res://prefabs/enemies/triangle.tscn", "weight": 20},
+			{"scene": "res://prefabs/enemies/triangle.tscn", "weight": 0},
 		],
 	},
 	{

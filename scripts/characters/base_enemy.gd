@@ -67,7 +67,7 @@ func _ready() -> void:
 	# stagger wander timers so enemies don't all turn at the same moment
 	time_until_change = randf_range(0.5, CHANGE_DIRECTION_TIME)
 	pick_random_direction()
-	$AnimatedSprite2D.play("default")
+	_play_anim("Idle")
 
 	# 5% chance to spawn nearly invisible — becomes fully visible on first hit
 	if randf() < INVISIBLE_CHANCE:
@@ -107,6 +107,9 @@ func _physics_process(delta: float) -> void:
 	if direction.x != 0:
 		$AnimatedSprite2D.flip_h = direction.x < 0
 
+	var anim := "Walk" if velocity.length() > 5.0 else "Idle"
+	_play_anim(anim)
+
 ## Returns a push vector that nudges this enemy away from any overlapping enemies.
 ## The force scales with how deeply they overlap — zero at the edge of the radius, max at full overlap.
 func _get_separation() -> Vector2:
@@ -119,6 +122,13 @@ func _get_separation() -> Vector2:
 		if dist < SEPARATION_RADIUS and dist > 0:
 			push += offset.normalized() * (1.0 - dist / SEPARATION_RADIUS) * SEPARATION_FORCE
 	return push
+
+func _play_anim(anim: String) -> void:
+	var frames: SpriteFrames = $AnimatedSprite2D.sprite_frames
+	if not frames.has_animation(anim):
+		anim = "Idle" if frames.has_animation("Idle") else "default"
+	if $AnimatedSprite2D.animation != anim:
+		$AnimatedSprite2D.play(anim)
 
 func pick_random_direction() -> void:
 	direction = Vector2.from_angle(randf() * TAU)

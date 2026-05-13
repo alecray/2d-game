@@ -2,30 +2,79 @@
 
 [ext_resource type="Script" uid="uid://y6ipi17mh0uk" path="res://scripts/characters/enemy.gd" id="2_example"]
 
-[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_6scm5"]
-_data = PackedByteArray("AAADAAUAAAABAAAAQAAAACAAAADuAAAAUklGRuYAAABXRUJQVlA4TNoAAAAvP8AHED9AJmDh1MC9BPrXUUQNRQHIQLrooov4vjvVtG0EdexUNh/Y43rzHwL8PzSTUkNkovrAcSRJjtLItzRg6UN8TziAcmEdQBmA/69VPew5ENF/Rm7bRmK3mZudZ8D7BbLlPSzLc5rjWLLtaDQUDYCaQxVE20xTINUclCEQczCRPRNwMYmLKcyey+gb6Dlohp6MGNcUgeypWXoQ0e9ch63HqYq2CfoZjD0SZO5kctntubnOdQ9N9DD5IwdWk/hnlqzMYMpZXgNlTul50jm1+jkeAh71c2DsBQ==")
-size_override = Vector2(64, 32)
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_6gc6c"]
+_data = PackedByteArray("AAADAAUAAAABAAAAYAAAAGAAAAAaAgAAUklGRhICAABXRUJQVlA4TAYCAAAvX8AXED9AJmDh1MC9BPrXUUQNRQHIQLrooov4vjvVtG0EdexUNh/Y43rzHwL8PzSTUkNkovpAcm3tcdt81rS2hgKQTyfMVid/AxnQAhrIwAIyqX/+AD4QRLyO6D8kt40kSYxTz6qI/AVSOqKYlADZ0TKJuxKT7BhFERbIpDoaWZXpDn3HTRCP+y4HUneoOyom2ULcsQt5lwyClwSvoOxo9u3k5oXsEHsSZF/m6Oizg+MCzAYtd1lL75mB+/WhApnnNtr2nqSpi8d98XFfY87QuHeGLDHH0tTk0+0dL58PNfFMnqPeez2xdxdrul5f/FMNzv6pWTYFK6BgTXvUx6g75B7St2lth1EbryMKiON14P+blI61BN3RhrsSk+wYRREWyCQ72u5iVaY7+mu6C/G473IgdYe4SwWzMckWcs9NTFnBM4MMgpeFrKPpThVzxbeTmyVbr3lPwJzB0TvyLujuKnYWz+Q55uB8cmQtYyNRmXLPijyjIp+zf2o0NUIFtcqzSSiJdy2fbT1WVM7arvJOW6k8QxuTrCgrmUaWVeeiQ3Yp36ZKyLnokF0rYCtRhckMRN3VH8aflI5lwftdH4EFjosusBeruY+JgDGD0JkNDCQC+5oXMx777rr8Ih2YDcK8GxByz23g02G9aSPmDH3+VoGdxTN5jm8JnP1TV9gC3mhxeBgdAA==")
+size_override = Vector2(96, 96)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_trtoc"]
-atlas = SubResource("PortableCompressedTexture2D_6scm5")
+[sub_resource type="AtlasTexture" id="AtlasTexture_av3om"]
+atlas = SubResource("PortableCompressedTexture2D_6gc6c")
 region = Rect2(0, 0, 32, 32)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_ycxjb"]
-atlas = SubResource("PortableCompressedTexture2D_6scm5")
+[sub_resource type="AtlasTexture" id="AtlasTexture_e1tyj"]
+atlas = SubResource("PortableCompressedTexture2D_6gc6c")
 region = Rect2(32, 0, 32, 32)
 
-[sub_resource type="SpriteFrames" id="SpriteFrames_t61mr"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_53qgd"]
+atlas = SubResource("PortableCompressedTexture2D_6gc6c")
+region = Rect2(64, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_p32mx"]
+atlas = SubResource("PortableCompressedTexture2D_6gc6c")
+region = Rect2(0, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0m2br"]
+atlas = SubResource("PortableCompressedTexture2D_6gc6c")
+region = Rect2(32, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w8cfh"]
+atlas = SubResource("PortableCompressedTexture2D_6gc6c")
+region = Rect2(64, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8o5kh"]
+atlas = SubResource("PortableCompressedTexture2D_6gc6c")
+region = Rect2(0, 64, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_0k17a"]
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_trtoc")
+"texture": SubResource("AtlasTexture_av3om")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_ycxjb")
+"texture": SubResource("AtlasTexture_av3om")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_e1tyj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_53qgd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_53qgd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_p32mx")
 }],
 "loop": true,
-"name": &"default",
-"speed": 4.0
+"name": &"Idle",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_av3om")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0m2br")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w8cfh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8o5kh")
+}],
+"loop": true,
+"name": &"Walk",
+"speed": 10.0
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trtoc"]
@@ -36,7 +85,8 @@ script = ExtResource("2_example")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1128824089]
 texture_filter = 1
-sprite_frames = SubResource("SpriteFrames_t61mr")
+sprite_frames = SubResource("SpriteFrames_0k17a")
+animation = &"Idle"
 metadata/_aseprite_wizard_interface_config_ = {
 "animation_section": false,
 "layer_section": true,
@@ -57,7 +107,7 @@ metadata/_aseprite_wizard_config_ = {
 "source": "res://assets/sprites/characters/spider.aseprite",
 "source_uid": 2438272833221532745
 }
-metadata/_aseprite_wizard_source_file_hash_ = "d77b43dc8c184489e6f7975107acb13e"
+metadata/_aseprite_wizard_source_file_hash_ = "63a413bc7b2e1a22747ac7fe5e590993"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=834003632]
 position = Vector2(0, -0.5)
