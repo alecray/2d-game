@@ -1,7 +1,8 @@
 extends Area2D
 
 const SPEED = 400.0
-const LIFETIME = 2.5
+const LIFETIME = 1.5
+const MAX_RANGE_SQ = 750.0 * 750.0  # cull if bullet travels beyond this distance from spawn
 const MAX_BOUNCES = 0
 const DAMAGE = 5
 const FADE_START = 0.8  # begin fading when this many seconds of lifetime remain
@@ -13,6 +14,7 @@ const HitParticles = preload("res://scripts/effects/hit_particles.gd")
 
 var direction = Vector2.ZERO
 var lifetime = LIFETIME
+var _spawn: Vector2
 var bounces = 0
 var damage = DAMAGE         # can be overridden by the shooter
 var speed = SPEED           # boosted by Velocity upgrade
@@ -24,6 +26,7 @@ var bullet_color = Color.WHITE  # set by the player; gun types will override thi
 var _hit_enemies: Dictionary = {}
 
 func _ready() -> void:
+	_spawn = global_position
 	area_entered.connect(_on_area_entered)
 	$ColorRect.color = bullet_color
 	var mat = CanvasItemMaterial.new()
@@ -61,7 +64,7 @@ func _physics_process(delta: float) -> void:
 	if lifetime < FADE_START:
 		modulate.a = lifetime / FADE_START
 
-	if lifetime <= 0:
+	if lifetime <= 0 or global_position.distance_squared_to(_spawn) > MAX_RANGE_SQ:
 		queue_free.call_deferred()
 
 func _on_area_entered(area: Area2D) -> void:

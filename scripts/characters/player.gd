@@ -18,6 +18,7 @@ var bullet_homing = false
 var bullet_count = 1
 var bullet_split = false
 var bullet_color = Color.WHITE     # gun types will override this
+var bullet_size_mult: float = 1.0
 var _shoot_mode: String = "bullet"
 var _laser: Node2D = null
 const BULLET_SPREAD_ANGLE = 0.22  # ~12.5 degrees, used for Payload spread
@@ -57,6 +58,7 @@ var health = MAX_HEALTH:
 		health_changed.emit(value)
 var damage_cooldown = 0.0  # counts down to zero between hits
 var fire_cooldown = 0.0    # counts down to zero between shots
+var _laser_shake_accum: float = 0.0
 var ammo = MAX_AMMO:
 	set(value):
 		ammo = value
@@ -89,7 +91,7 @@ func _ready() -> void:
 
 	var player_light = PointLight2D.new()
 	player_light.color = Color(1.0, 0.92, 0.82)
-	player_light.energy = 0.7
+	player_light.energy = 0.35
 	player_light.texture = _make_light_texture()
 	player_light.texture_scale = 200.0 / (0.1 * 256.0)
 	add_child(player_light)
@@ -112,6 +114,7 @@ func _ready() -> void:
 	bullet_speed_multiplier = gun["speed_mult"]
 	bullet_extra_bounces = gun["bounces"]
 	bullet_color = gun["color"]
+	bullet_size_mult = gun.get("bullet_size", 1.0)
 	_shoot_mode = gun.get("shoot_mode", "bullet")
 	if gun["sprite"] != "":
 		_gun.texture = load(gun["sprite"])
@@ -192,16 +195,23 @@ func _handle_shooting(delta: float) -> void:
 			if _laser == null:
 				_laser = LaserBeam.new()
 				add_sibling(_laser)
+				_laser.exclude_rids = [get_rid()]
 			_laser.global_position = _gun.global_transform * GUN_TIP_LOCAL
 			_laser.direction = aim_direction
 			_laser.damage = bullet_damage
 			if fire_cooldown <= 0:
 				ammo -= 1
 				fire_cooldown = FIRE_RATE
+			_laser_shake_accum += delta
+			if _laser_shake_accum >= 0.12:
+				_laser_shake_accum = 0.0
+				_shake_camera_laser()
 		else:
 			_stop_laser()
+			_laser_shake_accum = 0.0
 	else:
 		_stop_laser()
+		_laser_shake_accum = 0.0
 		if firing and fire_cooldown <= 0:
 			shoot_bullet()
 			fire_cooldown = FIRE_RATE
@@ -222,6 +232,8 @@ func _input(event: InputEvent) -> void:
 			magic_used.emit(MAGIC_COST)
 
 func take_damage(amount: int) -> void:
+	if get_node("/root/GameState").dev_god_mode:
+		return
 	health = max(0, health - amount)  # setter emits health_changed automatically
 	damage_taken.emit(amount)
 	FlashUtils.flash_white($AnimatedSprite2D_Player)
@@ -247,7 +259,10 @@ func _make_light_texture() -> GradientTexture2D:
 	return tex
 
 func _shake_camera() -> void:
-	var camera = get_viewport().get_camera_2d()
+	var vp := get_viewport()
+	if not vp:
+		return
+	var camera = vp.get_camera_2d()
 	if not camera:
 		return
 	var tween = create_tween()
@@ -257,6 +272,18 @@ func _shake_camera() -> void:
 		var offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)).normalized() * intensity
 		tween.tween_property(camera, "offset", offset, SHAKE_DURATION / SHAKE_STEPS)
 	tween.tween_property(camera, "offset", Vector2.ZERO, SHAKE_DURATION / SHAKE_STEPS)
+
+func _shake_camera_laser() -> void:
+	var vp := get_viewport()
+	if not vp:
+		return
+	var camera = vp.get_camera_2d()
+	if not camera:
+		return
+	var tween = create_tween()
+	var offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)).normalized() * 3.0
+	tween.tween_property(camera, "offset", offset, 0.06)
+	tween.tween_property(camera, "offset", Vector2.ZERO, 0.06)
 
 ## Converts the mouse's screen position to a world position using the player's current
 ## global_position as the camera centre, bypassing the one-frame camera transform lag
@@ -293,12 +320,15 @@ func shoot_bullet() -> void:
 		bullet.global_position = _gun.global_transform * GUN_TIP_LOCAL
 		bullet.damage = bullet_damage
 		bullet.speed = bullet.SPEED * bullet_speed_multiplier
+		var combined: Vector2 = fire_dir * bullet.speed + velocity
+		bullet.speed = combined.length()
+		bullet.direction = combined.normalized()
 		bullet.max_bounces = bullet.MAX_BOUNCES + bullet_extra_bounces
 		bullet.piercing = bullet_piercing
 		bullet.explosive = bullet_explosive
 		bullet.homing = bullet_homing
 		bullet.bullet_color = bullet_color
+		bullet.scale = Vector2.ONE * bullet_size_mult
 		add_sibling(bullet)
 
 	ammo -= 1  # setter emits ammo_changed automatically
-

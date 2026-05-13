@@ -1,0 +1,35 @@
+[gd_scene format=4 uid="uid://bgrass2env001"]
+
+[ext_resource type="Script" uid="uid://cd3mpx1kjlyun" path="res://scripts/environment/grass.gd" id="1_grass_script"]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_pfo41"]
+_data = PackedByteArray("AAADAAUAAAABAAAAQAAAACAAAACCAAAAUklGRnoAAABXRUJQVlA4TG0AAAAvP8AHEBcgEEjyJ5llQrFgMn+SvhQFAinOZK3nP+DegaNGkhwp15wrJKdDMRAOYr6b5noDIKL/E8AJW7f02IksyIVaB/+dWjcR+O5EJgF++zyQwkmE2gZGijmzB5EsFDu5YPYpZVrKPjIne909AA==")
+size_override = Vector2(64, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fhntt"]
+atlas = SubResource("PortableCompressedTexture2D_pfo41")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_if2d6"]
+atlas = SubResource("PortableCompressedTexture2D_pfo41")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_iv187"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fhntt")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_if2d6")
+}],
+"loop": true,
+"name": &"default",
+"speed": 2.0
+}]
+
+[node name="Grass2" type="AnimatedSprite2D" unique_id=1886422460]
+auto_translate_mode = 2
+texture_filter = 1
+sprite_frames = SubResource("SpriteFrames_iv187")
+script = ExtResource("1_grass_script")

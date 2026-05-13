@@ -20,10 +20,12 @@ const RAGE_DURATION = 1.5           # seconds the enemy charges at boosted speed
 const RAGE_SPEED_MULTIPLIER = 2.0   # speed multiplier applied during rage
 const AMMO_DROP_CHANCE = 0.1        # roll below this → drop ammo on death
 const HEALTH_DROP_CHANCE = 0.2      # roll below this (but above ammo) → drop health on death
-const CRATE_DROP_CHANCE = 0.025     # independent 2.5% chance to also drop an upgrade crate
-const COIN_DROP_CHANCE = 0.15       # independent 15% chance to drop a coin
+const CRATE_DROP_CHANCE = 0.025       # independent 2.5% chance to also drop an upgrade crate
+const COIN_DROP_CHANCE = 0.15         # independent 15% chance to drop a coin
+const BOSS_TOKEN_DROP_CHANCE = 0.005  # independent 0.5% chance to drop a boss token
 const CRATE_SCENE = preload("res://prefabs/crate.tscn")
 const COIN_SCENE = preload("res://prefabs/coin.tscn")
+const BOSS_TOKEN_SCENE = preload("res://prefabs/boss_token.tscn")
 const XP_REWARD = 5                 # XP granted to the player on death
 const ELITE_XP_REWARD = 15         # XP for elite (pack) enemies
 const RARE_XP_REWARD = 50          # XP for rare (golden) enemies
@@ -65,7 +67,7 @@ func _ready() -> void:
 	# stagger wander timers so enemies don't all turn at the same moment
 	time_until_change = randf_range(0.5, CHANGE_DIRECTION_TIME)
 	pick_random_direction()
-	$AnimatedSprite2D.play("default")
+	_play_anim("Idle")
 
 	# 5% chance to spawn nearly invisible — becomes fully visible on first hit
 	if randf() < INVISIBLE_CHANCE:
@@ -105,6 +107,9 @@ func _physics_process(delta: float) -> void:
 	if direction.x != 0:
 		$AnimatedSprite2D.flip_h = direction.x < 0
 
+	var anim := "Walk" if velocity.length() > 5.0 else "Idle"
+	_play_anim(anim)
+
 ## Returns a push vector that nudges this enemy away from any overlapping enemies.
 ## The force scales with how deeply they overlap — zero at the edge of the radius, max at full overlap.
 func _get_separation() -> Vector2:
@@ -117,6 +122,13 @@ func _get_separation() -> Vector2:
 		if dist < SEPARATION_RADIUS and dist > 0:
 			push += offset.normalized() * (1.0 - dist / SEPARATION_RADIUS) * SEPARATION_FORCE
 	return push
+
+func _play_anim(anim: String) -> void:
+	var frames: SpriteFrames = $AnimatedSprite2D.sprite_frames
+	if not frames.has_animation(anim):
+		anim = "Idle" if frames.has_animation("Idle") else "default"
+	if $AnimatedSprite2D.animation != anim:
+		$AnimatedSprite2D.play(anim)
 
 func pick_random_direction() -> void:
 	direction = Vector2.from_angle(randf() * TAU)
@@ -235,15 +247,22 @@ func die() -> void:
 	get_parent().add_child(particles)
 	particles.global_position = global_position
 
-	if randf() < CRATE_DROP_CHANCE:
+	var _ps := get_node("/root/PlayerStats")
+	if randf() < CRATE_DROP_CHANCE * _ps.crate_chance_mult():
 		var crate = CRATE_SCENE.instantiate()
 		crate.position = get_parent().to_local(global_position)
 		get_parent().call_deferred("add_child", crate)
 
-	if randf() < COIN_DROP_CHANCE:
+	if randf() < COIN_DROP_CHANCE * _ps.coin_chance_mult():
 		var coin = COIN_SCENE.instantiate()
 		coin.position = get_parent().to_local(global_position)
 		get_parent().call_deferred("add_child", coin)
+
+	var token_chance := 1.0 if get_node("/root/GameState").dev_boss_token_force else BOSS_TOKEN_DROP_CHANCE
+	if randf() < token_chance:
+		var token = BOSS_TOKEN_SCENE.instantiate()
+		token.position = get_parent().to_local(global_position)
+		get_parent().call_deferred("add_child", token)
 
 	queue_free.call_deferred()
 

@@ -25,6 +25,7 @@ const CURSES := [
 func _ready() -> void:
 	_time = randf() * TAU  # stagger phase so crates don't all bob in sync
 	body_entered.connect(_on_body_entered)
+	add_to_group("pickup")
 
 	_shadow = Sprite2D.new()
 	_shadow.texture = $Sprite2D.texture
@@ -51,7 +52,8 @@ func _process(delta: float) -> void:
 func _on_body_entered(body: Node2D) -> void:
 	if not body.is_in_group("player"):
 		return
-	if randf() < BAD_CRATE_CHANCE:
+	var bad_chance: float = get_node("/root/PlayerStats").bad_crate_chance()
+	if randf() < bad_chance:
 		_apply_curse(body)
 	else:
 		if get_tree().get_nodes_in_group("upgrade_screen").size() > 0:

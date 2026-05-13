@@ -3,7 +3,7 @@ extends Control
 const SHOP_ENTRY_SCENE = preload("res://prefabs/shop_entry.tscn")
 
 
-@onready var _entry_list: VBoxContainer = $VBox/EntryList
+@onready var _entry_list: VBoxContainer = $VBox/Scroll/EntryList
 @onready var _coins_label: Label = $VBox/LabelCoins
 
 var _stats: Node
@@ -42,3 +42,4 @@ func _on_equipped(_gun_id: String) -> void:
 
 func _on_back() -> void:
 	get_tree().change_scene_to_file("res://scenes/stats_screen.tscn")
+
