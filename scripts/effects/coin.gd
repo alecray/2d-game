@@ -15,6 +15,7 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	if $AnimatedSprite2D.sprite_frames:
 		$AnimatedSprite2D.play("default")
+	add_to_group("pickup")
 
 func _process(delta: float) -> void:
 	_time += delta

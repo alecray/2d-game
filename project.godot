@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="2d game"
-config/version="0.1.4"
+config/version="0.1.5"
 run/main_scene="uid://b1jv54q3e0gbd"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://icon.svg"

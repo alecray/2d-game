@@ -1,19 +1,16 @@
 ## Main game scene - manages enemy spawning and level environment
 extends Node2D
 
-const ENEMY_SCENE = preload("res://prefabs/enemies/enemy1.tscn")
-const ENEMY2_SCENE = preload("res://prefabs/enemies/enemy2.tscn")
-const ENEMY3_SCENE = preload("res://prefabs/enemies/enemy3.tscn")
-const ENEMY2_CHANCE = 0.25  # probability any given enemy spawns as enemy2
-const ENEMY3_CHANCE = 0.20  # probability any given enemy spawns as enemy3
-const GRASS_SCENE = preload("res://prefabs/environment/grass1.tscn")
+const SPIDER_SCENE = preload("res://prefabs/enemies/spider.tscn")  # fallback
+const GRASS_SCENE_DEFAULT = preload("res://prefabs/environment/grass1.tscn")
 const WALL_SCRIPT = preload("res://scripts/environment/wall.gd")
 const DUST_SCRIPT = preload("res://scripts/environment/dust_particles.gd")
+const TreeGenerator = preload("res://scripts/environment/tree_generator.gd")
 # Drop your tileable stone texture at this path to apply it to all walls
 const WALL_TEXTURE = "res://assets/sprites/environment/wall1.png"
 const TorchLight = preload("res://scripts/environment/torch_light.gd")
+const CloudLayer = preload("res://scripts/environment/cloud_layer.gd")
 const TORCH_ON_WALL_CHANCE = 0.25
-const SCENE_DARKNESS = Color(0.85, 0.85, 0.65)  # tune this to adjust overall darkness
 const BASE_SPAWN_INTERVAL = 2.0  # starting time between enemy spawns
 const MIN_SPAWN_INTERVAL = 0.25  # fastest the spawner can ever get
 const SPAWN_DISTANCE = 80.0  # extra buffer beyond the screen edge to spawn enemies
@@ -27,6 +24,7 @@ const ELITE_CHANCE = 0.15   # 15% chance a cluster spawns as elite
 const ELITE_PACK_SIZE = 3   # elite clusters always spawn this many
 const RARE_CHANCE = 0.02    # 2% chance any individual enemy spawns as rare (golden)
 const WORLD_SIZE = 2700
+const MAP_BOUNDS = Vector2(1576, 1440)  # half-extents of the background sprite — matches player.gd WORLD_BOUNDS
 const GRASS_COUNT = 100
 const RUIN_CLUSTER_COUNT = 24
 const RUIN_MIN_PIECES = 2
@@ -36,7 +34,10 @@ const WALL_ROTATION_RANGE = 0.2
 
 @onready var player = $CharacterBody2D_Player
 @onready var grass_parent = $GrassParent
+@onready var _bg_sprite = $Sprite2D_Background
 var spawn_timer = 0.0
+var _grass_scene: PackedScene
+var _spawn_table: Array = []  # resolved [{scene: PackedScene, weight: float}] built in _ready()
 var _next_pack_id = 0
 var difficulty_scale := 1.0
 var _cap_time := 0.0
@@ -52,6 +53,14 @@ func _get_spawn_count() -> int:
 
 func _ready() -> void:
 	spawn_timer = BASE_SPAWN_INTERVAL
+	var state = get_node("/root/GameState")
+	RenderingServer.set_default_clear_color(state.map_bg_color)
+	var tex = load(state.map_bg_texture)
+	if tex:
+		_bg_sprite.texture = tex
+	_grass_scene = load(state.map_grass_scene) if state.map_grass_scene else GRASS_SCENE_DEFAULT
+	for entry in state.map_spawn_table:
+		_spawn_table.append({"scene": load(entry["scene"]) as PackedScene, "weight": float(entry["weight"])})
 	var dust = CPUParticles2D.new()
 	dust.set_script(DUST_SCRIPT)
 	player.add_child(dust)
@@ -59,11 +68,17 @@ func _ready() -> void:
 	var spawn_area_offset = -spawn_area_size / 2
 	spawn_grass_in_area(GRASS_COUNT, spawn_area_size, spawn_area_offset)
 	spawn_ruins()
+	var trees := Node2D.new()
+	trees.set_script(TreeGenerator)
+	add_child(trees)
 	_setup_lighting()
+	var clouds := Node2D.new()
+	clouds.set_script(CloudLayer)
+	add_child(clouds)
 
 func _setup_lighting() -> void:
 	var canvas_mod = CanvasModulate.new()
-	canvas_mod.color = SCENE_DARKNESS
+	canvas_mod.color = get_node("/root/GameState").map_world_color
 	add_child(canvas_mod)
 
 func spawn_ruins() -> void:
@@ -142,20 +157,40 @@ func _process(delta: float) -> void:
 ## Calculates the screen half-diagonal at runtime so it works at any resolution or zoom level.
 func _get_cluster_origin() -> Vector2:
 	var angle = randf() * TAU
-	var camera = get_viewport().get_camera_2d()
-	var zoom = camera.zoom.x if camera else 1.0
-	var half_screen = get_viewport().get_visible_rect().size / (2.0 * zoom)
+	var zoom := 1.0
+	var vp := get_viewport()
+	if vp:
+		var camera := vp.get_camera_2d()
+		if camera:
+			zoom = camera.zoom.x
+	var half_screen := (vp.get_visible_rect().size if vp else Vector2(680, 440)) / (2.0 * zoom)
 	var min_dist = half_screen.length() + SPAWN_DISTANCE
 	var distance = randf_range(min_dist, min_dist + 150.0)
 	return player.global_position + Vector2.from_angle(angle) * distance
 
+func _pick_enemy_scene() -> PackedScene:
+	if _spawn_table.is_empty():
+		return SPIDER_SCENE
+	var total := 0.0
+	for entry in _spawn_table:
+		total += entry["weight"]
+	var roll := randf() * total
+	var accum := 0.0
+	for entry in _spawn_table:
+		accum += entry["weight"]
+		if roll < accum:
+			return entry["scene"]
+	return _spawn_table[-1]["scene"]
+
 ## Spawns one enemy near the given cluster origin
-func spawn_enemy(cluster_origin: Vector2, is_elite: bool = false, pack_id: int = -1, scale: float = 1.0) -> void:
-	var roll = randf()
-	var scene = ENEMY2_SCENE if roll < ENEMY2_CHANCE else ENEMY3_SCENE if roll < ENEMY2_CHANCE + ENEMY3_CHANCE else ENEMY_SCENE
+func spawn_enemy(cluster_origin: Vector2, is_elite: bool = false, pack_id: int = -1, diff_scale: float = 1.0) -> void:
+	var scene := _pick_enemy_scene()
 	var enemy = scene.instantiate()
 	var scatter = Vector2.from_angle(randf() * TAU) * randf() * CLUSTER_SPREAD
-	enemy.global_position = cluster_origin + scatter
+	var spawn_pos = cluster_origin + scatter
+	spawn_pos.x = clampf(spawn_pos.x, -MAP_BOUNDS.x, MAP_BOUNDS.x)
+	spawn_pos.y = clampf(spawn_pos.y, -MAP_BOUNDS.y, MAP_BOUNDS.y)
+	enemy.global_position = spawn_pos
 	enemy.add_to_group("enemy")
 	add_child(enemy)
 	if is_elite:
@@ -164,7 +199,7 @@ func spawn_enemy(cluster_origin: Vector2, is_elite: bool = false, pack_id: int =
 	elif randf() < RARE_CHANCE:
 		enemy.make_rare()
 	var diff_mult: float = get_node("/root/PlayerStats").enemy_stat_mult()
-	enemy.apply_difficulty(scale * diff_mult)
+	enemy.apply_difficulty(diff_scale * diff_mult)
 
 ## Generates grass using blue noise algorithm for natural distribution
 func spawn_grass_in_area(count: int, area_size: Vector2, area_offset: Vector2) -> void:
@@ -201,7 +236,7 @@ func spawn_grass_in_area(count: int, area_size: Vector2, area_offset: Vector2) -
 
 
 	for point in points:
-		var grass = GRASS_SCENE.instantiate()
+		var grass = _grass_scene.instantiate()
 		grass_parent.add_child(grass)
 		grass.global_position = point
 

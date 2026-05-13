@@ -25,6 +25,7 @@ const CURSES := [
 func _ready() -> void:
 	_time = randf() * TAU  # stagger phase so crates don't all bob in sync
 	body_entered.connect(_on_body_entered)
+	add_to_group("pickup")
 
 	_shadow = Sprite2D.new()
 	_shadow.texture = $Sprite2D.texture

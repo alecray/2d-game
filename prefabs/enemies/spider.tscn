@@ -1,4 +1,4 @@
-[gd_scene format=4 uid="uid://cjyqxn7e6qio8"]
+[gd_scene format=4 uid="uid://yx0w72adcw57"]
 
 [ext_resource type="Script" uid="uid://y6ipi17mh0uk" path="res://scripts/characters/enemy.gd" id="2_example"]
 
@@ -31,7 +31,7 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trtoc"]
 size = Vector2(34, 31)
 
-[node name="Enemy1" type="CharacterBody2D" unique_id=1852499199]
+[node name="Spider" type="CharacterBody2D" unique_id=1852499199]
 script = ExtResource("2_example")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1128824089]
@@ -54,7 +54,7 @@ metadata/_aseprite_wizard_config_ = {
 "scale": "1.0",
 "should_round_fps": true,
 "slice": "",
-"source": "res://assets/sprites/characters/enemy1.aseprite",
+"source": "res://assets/sprites/characters/spider.aseprite",
 "source_uid": 2438272833221532745
 }
 metadata/_aseprite_wizard_source_file_hash_ = "d77b43dc8c184489e6f7975107acb13e"

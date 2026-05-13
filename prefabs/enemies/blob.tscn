@@ -1,6 +1,6 @@
 [gd_scene format=4 uid="uid://d337xryljhtte"]
 
-[ext_resource type="Script" uid="uid://b3cemhmflih4b" path="res://scripts/characters/enemy2.gd" id="2_example"]
+[ext_resource type="Script" uid="uid://b3cemhmflih4b" path="res://scripts/characters/blob.gd" id="2_example"]
 
 [sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_4kqf7"]
 _data = PackedByteArray("AAADAAUAAAABAAAAQAAAAEAAAACqAAAAUklGRqIAAABXRUJQVlA4TJUAAAAvP8APEBcgEEiy3J9kDYFAEuf+HgsEkhz3Z3n+A/4VuIkkyZE6zlwox+clgo9HcSjePi2K5oqZfWVH9H8C9E2BpkoHEBx6IFQhGaT+fgC2nlOExILhSfKOZcnhlf0GvVNfTX1CkqLG4T+FSh20n9W/wKEH2tR+gEiG6EGtHeg5HwB+3A8MC5asT/8WfRVBsKlPqND2sQA=")
@@ -45,7 +45,7 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trtoc"]
 size = Vector2(34, 31)
 
-[node name="Enemy2" type="CharacterBody2D" unique_id=1852499200]
+[node name="Blob" type="CharacterBody2D" unique_id=1852499200]
 script = ExtResource("2_example")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1128824090]
@@ -69,7 +69,7 @@ metadata/_aseprite_wizard_config_ = {
 "scale": "1.0",
 "should_round_fps": true,
 "slice": "",
-"source": "res://assets/sprites/characters/enemy2.aseprite",
+"source": "res://assets/sprites/characters/blob.aseprite",
 "source_uid": 7936846614657940552
 }
 metadata/_aseprite_wizard_source_file_hash_ = "214049b90bf4893d141163f06683ff5d"

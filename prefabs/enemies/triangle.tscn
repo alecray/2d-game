@@ -1,6 +1,6 @@
 [gd_scene format=4 uid="uid://enemy3tscn01"]
 
-[ext_resource type="Script" uid="uid://bufykj3ayaf6n" path="res://scripts/characters/enemy3.gd" id="2_example"]
+[ext_resource type="Script" uid="uid://bufykj3ayaf6n" path="res://scripts/characters/triangle.gd" id="2_example"]
 
 [sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_s7y3x"]
 _data = PackedByteArray("AAADAAUAAAABAAAAQAAAAEAAAADEAQAAUklGRrwBAABXRUJQVlA4TLABAAAvP8APEBcgEEjyh9lkP4FAkuka4wsEkvwBJxhk/gPuHUhytj1um5eAue9g+jx/52HFAvwJhPtOPE0HZ9yzgL5rkrJ7hIj+TwBX56tKuOJY3oVLzDx7vMCye/ZE2MnuyW7ru7jIx3Jbo43m6QDPjsVvRwu29eop4u4+1KMNteqJcttupBa4lZon8uiSKhSp//RkQ1JPC8kjt5IU4XaqgbJTFpAltQh5k5TANqkFsCH1CAypx1ULq5Ygb1IFOEs1Qh5SmrLkAexWPU62yYE81FgM1WlTWnCrGsC2HlcuBxgtrEpL07myzr7wtGMeF3EHZy5hr6zYz4t0gS0OF/xvu+gYwQ4XWAlg4YLizyHvHM3dgZJW7uNfA7JPz774JlWgnKYyvkr6DJx7APxWkk6LBOTpW7qAqU9bfwfkPdueHGBIakyqgPkm1QhZC8qQalglwG+lE/BL6h7g2c5ZUgPMh9pOjYAP3YDdSmpp+qkKNiT1E4ArhZUWpSd2agCyTpAl/dw8AqYEtvX+ddQE5JsI+ba5u0/mAYpXf57jKk7ugQNTCVCKF3ZzgMPbI/slcGXmfwI=")
@@ -45,7 +45,7 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trtoc"]
 size = Vector2(34, 31)
 
-[node name="Enemy3" type="CharacterBody2D" unique_id=1852499201]
+[node name="Triangle" type="CharacterBody2D" unique_id=1852499201]
 script = ExtResource("2_example")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1128824091]
@@ -65,7 +65,7 @@ metadata/_aseprite_wizard_config_ = {
 "scale": "1.0",
 "should_round_fps": true,
 "slice": "",
-"source": "res://assets/sprites/characters/enemy3.aseprite",
+"source": "res://assets/sprites/characters/triangle.aseprite",
 "source_uid": 8232475981035464145
 }
 metadata/_aseprite_wizard_source_file_hash_ = "fbaaefa830026c2e43f5f4682c71da34"

@@ -54,8 +54,7 @@ func _on_shop() -> void:
 	get_tree().change_scene_to_file("res://scenes/shop.tscn")
 
 func _on_play() -> void:
-	get_node("/root/GameState").reset()
-	get_tree().change_scene_to_file("res://scenes/main.tscn")
+	get_tree().change_scene_to_file("res://scenes/map_selection.tscn")
 
 func _on_reset() -> void:
 	_stats.reset()

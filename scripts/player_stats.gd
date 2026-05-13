@@ -5,11 +5,11 @@ const SAVE_PATH = "user://player_stats.cfg"
 ## Each stat entry: label shown in UI, per-level effect description, XP cost for level 0→1,
 ## and the maximum level the player can reach.
 const STAT_DEFS = {
-	"max_health": {"label": "Max Health",    "desc": "+25 HP",      "base_cost": 50,  "max_level": 100},
+	"max_health": {"label": "Max Health",    "desc": "+5 HP",       "base_cost": 50,  "max_level": 100},
 	"speed":      {"label": "Move Speed",    "desc": "+15 speed",   "base_cost": 50,  "max_level": 100},
 	"damage":     {"label": "Bullet Damage", "desc": "+2 damage",   "base_cost": 60,  "max_level": 100},
 	"fire_rate":  {"label": "Fire Rate",     "desc": "-0.008s cd",  "base_cost": 70,  "max_level": 100},
-	"max_ammo":   {"label": "Max Ammo",      "desc": "+50 ammo",    "base_cost": 40,  "max_level": 100},
+	"max_ammo":   {"label": "Max Ammo",      "desc": "+10 ammo",    "base_cost": 40,  "max_level": 100},
 }
 
 ## Gun definitions — edit stats here. Applied on top of persistent upgrades each run.
@@ -45,6 +45,8 @@ const GUN_DEFS = {
 
 var xp: int = 0
 var coins: int = 0
+var boss_tokens: int = 0       # collected across runs; used to spawn the boss
+var unlocked_maps: Array = []  # map names unlocked by defeating bosses
 var owned_guns: Array = []  # purchased gun IDs; pistol is always available without being listed
 var equipped_gun: String = "gun1"
 var levels: Dictionary = {}
@@ -123,6 +125,15 @@ func add_coins(amount: int) -> void:
 	coins += amount
 	_save()
 
+func add_boss_token() -> void:
+	boss_tokens += 1
+	_save()
+
+func unlock_map(map_name: String) -> void:
+	if not unlocked_maps.has(map_name):
+		unlocked_maps.append(map_name)
+		_save()
+
 func reset() -> void:
 	xp = 0
 	for key in levels:
@@ -132,7 +143,7 @@ func reset() -> void:
 # --- stat bonuses applied to player ---
 
 func health_bonus() -> int:
-	return get_level("max_health") * 25
+	return get_level("max_health") * 5
 
 func speed_bonus() -> float:
 	return get_level("speed") * 15.0
@@ -144,7 +155,7 @@ func fire_rate_reduction() -> float:
 	return get_level("fire_rate") * 0.008
 
 func ammo_bonus() -> int:
-	return get_level("max_ammo") * 50
+	return get_level("max_ammo") * 10
 
 # --- persistence ---
 
@@ -152,6 +163,8 @@ func _save() -> void:
 	var cfg = ConfigFile.new()
 	cfg.set_value("stats", "xp", xp)
 	cfg.set_value("stats", "coins", coins)
+	cfg.set_value("stats", "boss_tokens", boss_tokens)
+	cfg.set_value("stats", "unlocked_maps", unlocked_maps)
 	cfg.set_value("stats", "owned_guns", owned_guns)
 	cfg.set_value("stats", "equipped_gun", equipped_gun)
 	cfg.set_value("stats", "difficulty", difficulty)
@@ -165,6 +178,8 @@ func _load() -> void:
 		return
 	xp = cfg.get_value("stats", "xp", 0)
 	coins = cfg.get_value("stats", "coins", 0)
+	boss_tokens = cfg.get_value("stats", "boss_tokens", 0)
+	unlocked_maps = cfg.get_value("stats", "unlocked_maps", [])
 	owned_guns = cfg.get_value("stats", "owned_guns", [])
 	equipped_gun = cfg.get_value("stats", "equipped_gun", "gun1")
 	difficulty = cfg.get_value("stats", "difficulty", 1)

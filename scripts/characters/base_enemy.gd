@@ -20,10 +20,12 @@ const RAGE_DURATION = 1.5           # seconds the enemy charges at boosted speed
 const RAGE_SPEED_MULTIPLIER = 2.0   # speed multiplier applied during rage
 const AMMO_DROP_CHANCE = 0.1        # roll below this → drop ammo on death
 const HEALTH_DROP_CHANCE = 0.2      # roll below this (but above ammo) → drop health on death
-const CRATE_DROP_CHANCE = 0.025     # independent 2.5% chance to also drop an upgrade crate
-const COIN_DROP_CHANCE = 0.15       # independent 15% chance to drop a coin
+const CRATE_DROP_CHANCE = 0.025       # independent 2.5% chance to also drop an upgrade crate
+const COIN_DROP_CHANCE = 0.15         # independent 15% chance to drop a coin
+const BOSS_TOKEN_DROP_CHANCE = 0.005  # independent 0.5% chance to drop a boss token
 const CRATE_SCENE = preload("res://prefabs/crate.tscn")
 const COIN_SCENE = preload("res://prefabs/coin.tscn")
+const BOSS_TOKEN_SCENE = preload("res://prefabs/boss_token.tscn")
 const XP_REWARD = 5                 # XP granted to the player on death
 const ELITE_XP_REWARD = 15         # XP for elite (pack) enemies
 const RARE_XP_REWARD = 50          # XP for rare (golden) enemies
@@ -245,6 +247,12 @@ func die() -> void:
 		var coin = COIN_SCENE.instantiate()
 		coin.position = get_parent().to_local(global_position)
 		get_parent().call_deferred("add_child", coin)
+
+	var token_chance := 1.0 if get_node("/root/GameState").dev_boss_token_force else BOSS_TOKEN_DROP_CHANCE
+	if randf() < token_chance:
+		var token = BOSS_TOKEN_SCENE.instantiate()
+		token.position = get_parent().to_local(global_position)
+		get_parent().call_deferred("add_child", token)
 
 	queue_free.call_deferred()
 

@@ -1,0 +1,14 @@
+[remap]
+
+importer="aseprite_wizard.plugin.noop"
+type="PackedDataContainer"
+uid="uid://dpj4xaggfy3xd"
+path="res://.godot/imported/triangle.aseprite-72dabd11a52dbc4519ae7e0356792ec6.res"
+
+[deps]
+
+source_file="res://assets/sprites/characters/triangle.aseprite"
+dest_files=["res://.godot/imported/triangle.aseprite-72dabd11a52dbc4519ae7e0356792ec6.res"]
+
+[params]
+

@@ -13,6 +13,7 @@
 [ext_resource type="Script" path="res://scripts/ui/version_label.gd" id="9_verlabel"]
 [ext_resource type="Script" path="res://scripts/ui/dev_menu.gd" id="10_devmenu"]
 [ext_resource type="Script" path="res://scripts/ui/pause_overlay.gd" id="11_pause"]
+[ext_resource type="Script" path="res://scripts/ui/fps_label.gd" id="12_fpslabel"]
 
 [sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_85g3d"]
 _data = PackedByteArray("AAADAAUAAAABAAAAQAAAACAAAACsAAAAUklGRqQAAABXRUJQVlA4TJcAAAAvP8AHED9AqIGZ9bT7mRCqURNJCvNtIAihQwv+RaCATMBCiJUQQiCdFfHNfwgC2QBj7/LOPnIH1pAkyWqFVWiFUViFUViF53/O/R/Rf7Rt24ZG1kJ9A8/4GnzLwes1mp1x5l1Ks7NAYcdqYf135gK/b1mdiUBRFQJ2Z5ijs90/hlEpRnF0JgJfg9mZCfucDdidmbDvq+kAAA==")
@@ -160,15 +161,15 @@ layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -40.0
+offset_left = -55.0
 offset_top = 8.0
-offset_right = 40.0
+offset_right = 55.0
 offset_bottom = 28.0
 grow_horizontal = 2
-theme_override_colors/font_color = Color(1, 0.35, 0.35, 1)
+theme_override_colors/font_color = Color(1, 0.75, 0, 1)
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 8
-text = "0"
+text = "0 / 5"
 horizontal_alignment = 1
 script = ExtResource("8_ecounter")
 
@@ -191,6 +192,23 @@ theme_override_font_sizes/font_size = 6
 text = "Version 0.1.0"
 horizontal_alignment = 2
 script = ExtResource("9_verlabel")
+
+[node name="Label_FPS" type="Label" parent="HUDLayer/UI" unique_id=738291048]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -80.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = 22.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(1, 1, 1, 0.5)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 6
+text = "0 fps"
+horizontal_alignment = 2
+script = ExtResource("12_fpslabel")
 
 [node name="PauseLayer" type="CanvasLayer" parent="." unique_id=222222221]
 layer = 15
@@ -264,6 +282,18 @@ layout_mode = 2
 theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 10
 text = "GIVE 1000 COINS"
+
+[node name="BtnGodMode" type="Button" parent="DevMenu/Panel/VBox" unique_id=111111121]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 10
+text = "GOD MODE: OFF"
+
+[node name="BtnBossTokenChance" type="Button" parent="DevMenu/Panel/VBox" unique_id=111111120]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 10
+text = "BOSS TOKEN CHANCE: NORMAL"
 
 [node name="Sep2" type="HSeparator" parent="DevMenu/Panel/VBox" unique_id=111111118]
 layout_mode = 2
