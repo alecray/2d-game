@@ -65,6 +65,7 @@ func _ready() -> void:
 		_leaf_color.append(Color(c.r, c.g, c.b, 1.0))
 
 	var body := StaticBody2D.new()
+	body.add_to_group("destructible_tree")
 	var cshape := CollisionShape2D.new()
 	var rect := RectangleShape2D.new()
 	rect.size = Vector2(TRUNK_WIDTH + 4.0, TRUNK_HEIGHT)  # uses randomised values

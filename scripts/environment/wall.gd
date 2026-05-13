@@ -11,6 +11,7 @@ const TILE_SIZE = 32.0  # world units one full texture tile covers — match you
 var texture: Texture2D  # set by main.gd after instantiation; falls back to solid gray if null
 
 func _ready() -> void:
+	add_to_group("destructible_wall")
 	texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 	var shape = RectangleShape2D.new()

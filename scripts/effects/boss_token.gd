@@ -60,7 +60,7 @@ func _on_body_entered(body: Node2D) -> void:
 	if state.boss_tokens >= TOKENS_TO_SPAWN:
 		state.boss_tokens = 0
 		_spawn_boss_banner()
-		_clear_pickups()
+		get_tree().call_group("main_scene", "spawn_boss")
 	queue_free()
 
 func _spawn_pickup_popup(count: int) -> void:

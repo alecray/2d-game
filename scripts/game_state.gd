@@ -21,7 +21,15 @@ var map_spawn_table: Array = [
 var boss_tokens: int = 0               # tokens collected this run; reaching 5 spawns the boss
 var dev_boss_token_force: bool = false  # set by dev menu; makes boss tokens drop 100% of the time
 var dev_god_mode: bool = false          # set by dev menu; player takes no damage
+var map_boss_scene: String = "res://prefabs/enemies/boss_goblin.tscn"
+var map_boss_health_mult: float = 1.0
+var map_boss_damage_mult: float = 1.0
+var map_boss_unlocks: String = ""       # map name to unlock when this map's boss is defeated
+var boss_alive: bool = false
+var boss_triggered: bool = false        # true once boss has been spawned this run; never resets
 
 func reset() -> void:
 	kills = 0
 	boss_tokens = 0
+	boss_alive = false
+	boss_triggered = false

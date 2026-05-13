@@ -35,12 +35,18 @@ const WALL_ROTATION_RANGE = 0.2
 @onready var player = $CharacterBody2D_Player
 @onready var grass_parent = $GrassParent
 @onready var _bg_sprite = $Sprite2D_Background
+const FONT_BOSS = preload("res://assets/fonts/PressStart2P-Regular.ttf")
+const BossDeathParticles = preload("res://scripts/effects/enemy_death_particles.gd")
+const BossHealthBarScript = preload("res://scripts/ui/boss_health_bar.gd")
+
 var spawn_timer = 0.0
 var _grass_scene: PackedScene
 var _spawn_table: Array = []  # resolved [{scene: PackedScene, weight: float}] built in _ready()
 var _next_pack_id = 0
 var difficulty_scale := 1.0
 var _cap_time := 0.0
+var _boss_alive := false
+var _boss_triggered := false
 
 func _get_spawn_interval() -> float:
 	var kills = get_node("/root/GameState").kills
@@ -52,6 +58,7 @@ func _get_spawn_count() -> int:
 	return 1 + kills / KILLS_PER_EXTRA_ENEMY
 
 func _ready() -> void:
+	add_to_group("main_scene")
 	spawn_timer = BASE_SPAWN_INTERVAL
 	var state = get_node("/root/GameState")
 	RenderingServer.set_default_clear_color(state.map_bg_color)
@@ -135,23 +142,24 @@ func _process(delta: float) -> void:
 	else:
 		_cap_time = 0.0
 
-	spawn_timer -= delta
-	if spawn_timer <= 0:
-		var max_enemies = _get_max_enemies()
-		var count = _get_spawn_count()
-		if current < max_enemies:
-			# roll elite once per cluster — elites always come in a fixed pack size
-			var is_elite = randf() < ELITE_CHANCE
-			var cluster_origin = _get_cluster_origin()
-			var spawn_count = ELITE_PACK_SIZE if is_elite else count
-			var pack_id = -1
-			if is_elite:
-				pack_id = _next_pack_id
-				_next_pack_id += 1
-			for i in spawn_count:
-				if current + i < max_enemies:
-					spawn_enemy(cluster_origin, is_elite, pack_id, difficulty_scale)
-		spawn_timer = _get_spawn_interval()
+	if not _boss_alive:
+		spawn_timer -= delta
+		if spawn_timer <= 0:
+			var max_enemies = _get_max_enemies()
+			var count = _get_spawn_count()
+			if current < max_enemies:
+				# roll elite once per cluster — elites always come in a fixed pack size
+				var is_elite = randf() < ELITE_CHANCE
+				var cluster_origin = _get_cluster_origin()
+				var spawn_count = ELITE_PACK_SIZE if is_elite else count
+				var pack_id = -1
+				if is_elite:
+					pack_id = _next_pack_id
+					_next_pack_id += 1
+				for i in spawn_count:
+					if current + i < max_enemies:
+						spawn_enemy(cluster_origin, is_elite, pack_id, difficulty_scale)
+			spawn_timer = _get_spawn_interval()
 
 ## Returns a random point just outside the camera's visible area to use as a cluster center.
 ## Calculates the screen half-diagonal at runtime so it works at any resolution or zoom level.
@@ -200,6 +208,83 @@ func spawn_enemy(cluster_origin: Vector2, is_elite: bool = false, pack_id: int =
 		enemy.make_rare()
 	var diff_mult: float = get_node("/root/PlayerStats").enemy_stat_mult()
 	enemy.apply_difficulty(diff_scale * diff_mult)
+
+## Spawns the map's boss when called by boss_token.gd via the main_scene group.
+func spawn_boss() -> void:
+	if _boss_triggered:
+		return
+	var state = get_node("/root/GameState")
+	_boss_triggered = true
+	_boss_alive = true
+	state.boss_alive = true
+	state.boss_triggered = true
+	_clear_battlefield()
+	var scene: PackedScene = load(state.map_boss_scene)
+	if not scene:
+		return
+	var boss = scene.instantiate()
+	var spawn_pos = _get_cluster_origin()
+	boss.global_position = spawn_pos
+	add_child(boss)
+	boss.make_boss(state.map_boss_health_mult, state.map_boss_damage_mult)
+	boss.boss_died.connect(_on_boss_defeated)
+	var hud_layer := CanvasLayer.new()
+	hud_layer.layer = 20
+	get_tree().root.add_child(hud_layer)
+	var bar := Control.new()
+	bar.set_script(BossHealthBarScript)
+	hud_layer.add_child(bar)
+	bar.setup(boss)
+
+## Pops all enemies and pickups with explosion particles to clear the arena for the boss.
+func _clear_battlefield() -> void:
+	for enemy in get_tree().get_nodes_in_group("enemy"):
+		if not is_instance_valid(enemy):
+			continue
+		var particles = CPUParticles2D.new()
+		particles.set_script(BossDeathParticles)
+		var color = enemy.get_death_color() if enemy.has_method("get_death_color") else Color(0.5, 0.5, 0.5)
+		particles.base_color = color
+		particles.base_amount = 20
+		add_child(particles)
+		particles.global_position = enemy.global_position
+		enemy.queue_free()
+	for pickup in get_tree().get_nodes_in_group("pickup"):
+		if not is_instance_valid(pickup):
+			continue
+		var particles = CPUParticles2D.new()
+		particles.set_script(BossDeathParticles)
+		particles.base_color = Color(1.0, 0.85, 0.2)
+		particles.base_amount = 10
+		add_child(particles)
+		particles.global_position = pickup.global_position
+		pickup.queue_free()
+
+func _on_boss_defeated() -> void:
+	_boss_alive = false
+	get_node("/root/GameState").boss_alive = false
+	var unlocks: String = get_node("/root/GameState").map_boss_unlocks
+	if not unlocks.is_empty():
+		get_node("/root/PlayerStats").unlock_map(unlocks)
+	_spawn_boss_defeated_banner()
+
+func _spawn_boss_defeated_banner() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 15
+	get_tree().root.add_child(layer)
+	var lbl := Label.new()
+	lbl.text = "BOSS DEFEATED!"
+	lbl.add_theme_font_override("font", FONT_BOSS)
+	lbl.add_theme_font_size_override("font_size", 22)
+	lbl.add_theme_color_override("font_color", Color(0.2, 1.0, 0.3))
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(lbl)
+	var tween := lbl.create_tween()
+	tween.tween_interval(2.0)
+	tween.tween_property(lbl, "modulate:a", 0.0, 0.8)
+	tween.tween_callback(layer.queue_free)
 
 ## Generates grass using blue noise algorithm for natural distribution
 func spawn_grass_in_area(count: int, area_size: Vector2, area_offset: Vector2) -> void:
