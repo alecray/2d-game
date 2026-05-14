@@ -1,6 +1,6 @@
 extends CanvasLayer
 
-const UPGRADE_CARD_SCENE = preload("res://prefabs/upgrade_card.tscn")
+const UPGRADE_CARD_SCENE = preload("res://prefabs/ui/upgrade_card.tscn")
 
 @onready var _card_row: HBoxContainer = $Center/VBox/CardRow
 

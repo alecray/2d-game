@@ -23,9 +23,11 @@ const HEALTH_DROP_CHANCE = 0.2      # roll below this (but above ammo) → drop 
 const CRATE_DROP_CHANCE = 0.025       # independent 2.5% chance to also drop an upgrade crate
 const COIN_DROP_CHANCE = 0.15         # independent 15% chance to drop a coin
 const BOSS_TOKEN_DROP_CHANCE = 0.005  # independent 0.5% chance to drop a boss token
-const CRATE_SCENE = preload("res://prefabs/crate.tscn")
-const COIN_SCENE = preload("res://prefabs/coin.tscn")
-const BOSS_TOKEN_SCENE = preload("res://prefabs/boss_token.tscn")
+const CRATE_SCENE = preload("res://prefabs/items/crate.tscn")
+const COIN_SCENE = preload("res://prefabs/items/coin.tscn")
+const BOSS_TOKEN_SCENE = preload("res://prefabs/items/boss_token.tscn")
+const HEALTH_PICKUP_SCENE = preload("res://prefabs/items/health_pickup.tscn")
+const AMMO_PICKUP_SCENE = preload("res://prefabs/items/ammo_pickup.tscn")
 const XP_REWARD = 5                 # XP granted to the player on death
 const ELITE_XP_REWARD = 15         # XP for elite (pack) enemies
 const RARE_XP_REWARD = 50          # XP for rare (golden) enemies
@@ -50,12 +52,22 @@ var direction = Vector2.ZERO    # current movement direction (unit vector)
 var time_until_change = 0.0     # countdown until the next random direction pick
 var current_speed = 0.0         # smoothly interpolated actual speed; set in _ready
 var knockback_velocity = Vector2.ZERO
+var _attack_timer := 0.0
+var _attack_cooldown := 0.0
+var _flip_facing := false  # set true in subclass _ready() if sprite art faces left by default
 
 const KNOCKBACK_FRICTION = 14.0
+const ATTACK_DURATION = 0.7     # default seconds locked in melee animation (override via _get_attack_duration)
+const ATTACK_COOLDOWN = 0.4     # extra seconds after the animation before it can attack again
+const ATTACK_HIT_WINDOW_FRAC = 0.35  # fraction of attack duration where contact damage is active (tail end)
+const PLAYER_AVOIDANCE_RADIUS = 24.0  # enemies won't try to occupy this space around the player
+const PLAYER_AVOIDANCE_FORCE = 150.0
 
 func _ready() -> void:
 	current_speed = SPEED
 	health = max_health
+	collision_layer = 4  # enemy body on layer 3
+	collision_mask = 5   # collide with walls (layer 1) and other enemies (layer 3)
 
 	# randomly assign this enemy's loot drop at spawn
 	var roll = randf()
@@ -78,9 +90,52 @@ func _ready() -> void:
 	if has_node("Area2D"):
 		$Area2D.add_to_group("enemy_hitbox")
 
+func _get_melee_range() -> float:
+	return 0.0
+
+func _get_attack_duration() -> float:
+	return ATTACK_DURATION
+
+## Returns false for melee enemies outside their hit window.
+## Melee enemies only deal damage in the last ATTACK_HIT_WINDOW_FRAC of the animation.
+func is_contact_damage_active() -> bool:
+	if _get_melee_range() == 0.0:
+		return true
+	return _attack_timer > 0.0 and _attack_timer <= _get_attack_duration() * ATTACK_HIT_WINDOW_FRAC
+
 func _physics_process(delta: float) -> void:
 	var player = get_tree().get_first_node_in_group("player")
+	_attack_cooldown -= delta
 
+	# === ATTACK STATE: frozen for the duration of the melee animation ===
+	if _attack_timer > 0.0:
+		_attack_timer -= delta
+		knockback_velocity = knockback_velocity.lerp(Vector2.ZERO, delta * KNOCKBACK_FRICTION)
+		velocity = knockback_velocity
+		if aura_color.a > 0.0:
+			_aura_time += delta
+			queue_redraw()
+		if direction.x != 0:
+			$AnimatedSprite2D.flip_h = _flip_facing != (direction.x < 0)
+		move_and_slide()
+		return
+
+	# === MELEE TRIGGER: commit to attack before moving this frame ===
+	var melee_range := _get_melee_range()
+	if melee_range > 0.0 and _attack_cooldown <= 0.0 \
+			and player and global_position.distance_to(player.global_position) <= melee_range:
+		direction = (player.global_position - global_position).normalized()
+		if direction.x != 0:
+			$AnimatedSprite2D.flip_h = _flip_facing != (direction.x < 0)
+		var dur := _get_attack_duration()
+		_attack_timer = dur
+		_attack_cooldown = dur + ATTACK_COOLDOWN
+		velocity = Vector2.ZERO
+		move_and_slide()
+		_play_anim("Melee")
+		return
+
+	# === NORMAL AI MOVEMENT ===
 	var in_range = player and global_position.distance_to(player.global_position) <= DETECTION_RANGE
 	if player and (in_range or rage_timer > 0):
 		# chase the player; double speed while enraged from a recent hit
@@ -99,16 +154,26 @@ func _physics_process(delta: float) -> void:
 	if aura_color.a > 0.0:
 		_aura_time += delta
 		queue_redraw()
-	velocity = direction * current_speed + _get_separation() + knockback_velocity
+	velocity = direction * current_speed + _get_separation() + _get_player_avoidance() + knockback_velocity
 	knockback_velocity = knockback_velocity.lerp(Vector2.ZERO, delta * KNOCKBACK_FRICTION)
 	move_and_slide()
 
-	# flip sprite to face the direction of travel
 	if direction.x != 0:
-		$AnimatedSprite2D.flip_h = direction.x < 0
+		$AnimatedSprite2D.flip_h = _flip_facing != (direction.x < 0)
 
 	var anim := "Walk" if velocity.length() > 5.0 else "Idle"
-	_play_anim(anim)
+	_play_anim(_pick_anim(anim))
+
+## Returns a push vector that keeps this enemy from occupying the same space as the player.
+func _get_player_avoidance() -> Vector2:
+	var player = get_tree().get_first_node_in_group("player")
+	if not player:
+		return Vector2.ZERO
+	var offset = global_position - player.global_position
+	var dist = offset.length()
+	if dist < PLAYER_AVOIDANCE_RADIUS and dist > 0:
+		return offset.normalized() * (1.0 - dist / PLAYER_AVOIDANCE_RADIUS) * PLAYER_AVOIDANCE_FORCE
+	return Vector2.ZERO
 
 ## Returns a push vector that nudges this enemy away from any overlapping enemies.
 ## The force scales with how deeply they overlap — zero at the edge of the radius, max at full overlap.
@@ -122,6 +187,9 @@ func _get_separation() -> Vector2:
 		if dist < SEPARATION_RADIUS and dist > 0:
 			push += offset.normalized() * (1.0 - dist / SEPARATION_RADIUS) * SEPARATION_FORCE
 	return push
+
+func _pick_anim(default_anim: String) -> String:
+	return default_anim
 
 func _play_anim(anim: String) -> void:
 	var frames: SpriteFrames = $AnimatedSprite2D.sprite_frames
@@ -176,10 +244,10 @@ func _draw() -> void:
 func apply_knockback(push: Vector2) -> void:
 	knockback_velocity += push
 
-func apply_difficulty(scale: float) -> void:
-	max_health = int(max_health * scale)
+func apply_difficulty(difficulty: float) -> void:
+	max_health = int(max_health * difficulty)
 	health = max_health
-	DAMAGE = maxi(1, int(DAMAGE * scale))
+	DAMAGE = maxi(1, int(DAMAGE * difficulty))
 
 ## Override in subclasses to return the base sprite colour used for death particles.
 func get_death_color() -> Color:
@@ -228,14 +296,14 @@ func die() -> void:
 	get_parent().add_child(xp_label)
 	xp_label.global_position = global_position
 
-	var player = get_tree().get_first_node_in_group("player")
-	if player:
-		if drop_type == DropType.AMMO:
-			player.ammo = player.MAX_AMMO
-			_spawn_popup("+ammo", Color(1, 1, 0, 1))
-		elif drop_type == DropType.HEALTH:
-			player.health = player.MAX_HEALTH
-			_spawn_popup("+health", Color(0, 1, 0, 1))
+	if drop_type == DropType.AMMO:
+		var pickup = AMMO_PICKUP_SCENE.instantiate()
+		pickup.position = get_parent().to_local(global_position)
+		get_parent().call_deferred("add_child", pickup)
+	elif drop_type == DropType.HEALTH:
+		var pickup = HEALTH_PICKUP_SCENE.instantiate()
+		pickup.position = get_parent().to_local(global_position)
+		get_parent().call_deferred("add_child", pickup)
 
 	# color and particle count scale with enemy tier
 	var p_color = Color(1.0, 0.75, 0.05) if is_rare else (Color(0.1, 0.45, 1.0) if pack_id != -1 else get_death_color())

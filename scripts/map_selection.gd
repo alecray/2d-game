@@ -1,6 +1,6 @@
 extends Control
 
-const MAP_CARD_SCENE = preload("res://prefabs/map_card.tscn")
+const MAP_CARD_SCENE = preload("res://prefabs/ui/map_card.tscn")
 
 const MAPS = [
 	{
@@ -15,6 +15,10 @@ const MAPS = [
 			{"scene": "res://prefabs/enemies/blob.tscn", "weight": 25},
 			{"scene": "res://prefabs/enemies/triangle.tscn", "weight": 0},
 		],
+		"boss_scene": "res://prefabs/enemies/boss_goblin.tscn",
+		"boss_health_mult": 1.0,
+		"boss_damage_mult": 1.0,
+		"boss_unlocks": "Frigid Tundra",
 	},
 	{
 		"name": "Frigid Tundra",
@@ -35,6 +39,10 @@ const MAPS = [
 			{"scene": "res://prefabs/enemies/blob.tscn", "weight": 25},
 			{"scene": "res://prefabs/enemies/triangle.tscn", "weight": 20},
 		],
+		"boss_scene": "res://prefabs/enemies/boss_goblin.tscn",
+		"boss_health_mult": 1.5,
+		"boss_damage_mult": 1.3,
+		"boss_unlocks": "Depths",
 	},
 	{
 		"name": "Depths",
@@ -44,9 +52,13 @@ const MAPS = [
 		"world_color": Color(0.30, 0.30, 0.50),
 		"spawn_table": [
 			{"scene": "res://prefabs/enemies/spider.tscn", "weight": 55},
-			{"scene": "res://prefabs/enemies/blob.tscn", "weight": 25},
-			{"scene": "res://prefabs/enemies/triangle.tscn", "weight": 20},
+			{"scene": "res://prefabs/enemies/blob.tscn", "weight": 45},
+			{"scene": "res://prefabs/enemies/triangle.tscn", "weight": 0},
 		],
+		"boss_scene": "res://prefabs/enemies/boss_goblin.tscn",
+		"boss_health_mult": 2.5,
+		"boss_damage_mult": 2.0,
+		"boss_unlocks": "",
 	},
 ]
 
@@ -78,6 +90,10 @@ func _on_map_selected(data: Dictionary) -> void:
 	])
 	state.map_canopy_shadow = data.get("canopy_shadow", Color(0.22, 0.55, 0.17, 0.28))
 	state.map_spawn_table = data.get("spawn_table", state.map_spawn_table)
+	state.map_boss_scene       = data.get("boss_scene", "")
+	state.map_boss_health_mult = data.get("boss_health_mult", 1.0)
+	state.map_boss_damage_mult = data.get("boss_damage_mult", 1.0)
+	state.map_boss_unlocks     = data.get("boss_unlocks", "")
 	get_tree().change_scene_to_file(data.get("scene", "res://scenes/main.tscn"))
 
 func _on_back() -> void:

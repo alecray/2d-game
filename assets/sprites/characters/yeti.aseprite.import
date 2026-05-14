@@ -1,0 +1,14 @@
+[remap]
+
+importer="aseprite_wizard.plugin.noop"
+type="PackedDataContainer"
+uid="uid://dop4iy74qrxe5"
+path="res://.godot/imported/yeti.aseprite-e2e2d7404562a04233ec9c9b0f676f7a.res"
+
+[deps]
+
+source_file="res://assets/sprites/characters/yeti.aseprite"
+dest_files=["res://.godot/imported/yeti.aseprite-e2e2d7404562a04233ec9c9b0f676f7a.res"]
+
+[params]
+

@@ -1,6 +1,6 @@
 extends Control
 
-const SHOP_ENTRY_SCENE = preload("res://prefabs/shop_entry.tscn")
+const SHOP_ENTRY_SCENE = preload("res://prefabs/ui/shop_entry.tscn")
 
 
 @onready var _entry_list: VBoxContainer = $VBox/Scroll/EntryList

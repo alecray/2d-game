@@ -12,6 +12,7 @@ var _collecting: bool = false
 
 func _ready() -> void:
 	_time = randf() * TAU
+	collision_mask = 2  # detect player body (layer 2)
 	body_entered.connect(_on_body_entered)
 	if $AnimatedSprite2D.sprite_frames:
 		$AnimatedSprite2D.play("default")

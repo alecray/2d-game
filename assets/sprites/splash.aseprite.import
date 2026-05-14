@@ -1,0 +1,14 @@
+[remap]
+
+importer="aseprite_wizard.plugin.noop"
+type="PackedDataContainer"
+uid="uid://drunni4gji4e7"
+path="res://.godot/imported/splash.aseprite-8cd854b8978ffb666bbe326c30c3ce7b.res"
+
+[deps]
+
+source_file="res://assets/sprites/splash.aseprite"
+dest_files=["res://.godot/imported/splash.aseprite-8cd854b8978ffb666bbe326c30c3ce7b.res"]
+
+[params]
+

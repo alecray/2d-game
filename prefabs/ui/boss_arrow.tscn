@@ -1,0 +1,46 @@
+[gd_scene format=4 uid="uid://dwdbw8anakhas"]
+
+[ext_resource type="Script" uid="uid://b267wq4r47ymc" path="res://scripts/ui/boss_arrow.gd" id="1_boss_arrow"]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_dbm5e"]
+_data = PackedByteArray("AAADAAUAAAABAAAAEAAAABAAAABGAAAAUklGRj4AAABXRUJQVlA4TDIAAAAvD8ADEA8wp1M3Q/Mf8GATSVal5m+BCIwgipAQaUg5CScnov9Bd3xeus2wLPO2F34bAA==")
+size_override = Vector2(16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yr0f6"]
+atlas = SubResource("PortableCompressedTexture2D_dbm5e")
+region = Rect2(0, 0, 16, 16)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_a4sbp"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_yr0f6")
+}],
+"loop": true,
+"name": &"default",
+"speed": 10.0
+}]
+
+[node name="BossArrow" type="Node2D" unique_id=1951845327]
+script = ExtResource("1_boss_arrow")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=358137543]
+texture_filter = 1
+sprite_frames = SubResource("SpriteFrames_a4sbp")
+metadata/_aseprite_wizard_interface_config_ = {
+"pending_changes": {}
+}
+metadata/_aseprite_wizard_config_ = {
+"embed_tex": true,
+"layers": [],
+"o_ex_p": "",
+"o_folder": "",
+"o_name": "",
+"only_visible": false,
+"scale": "1.0",
+"should_round_fps": true,
+"slice": "",
+"source": "res://assets/sprites/arrow.aseprite",
+"source_uid": 3323293309800232969
+}
+metadata/_aseprite_wizard_source_file_hash_ = "cbce8ccad9ad2e2c87caa0d578bfc7f2"

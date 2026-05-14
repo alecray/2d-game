@@ -3,53 +3,20 @@ extends Area2D
 const TOKENS_TO_SPAWN = 5
 const BOB_SPEED = 1.8
 const BOB_AMPLITUDE = 5.0
-const SPIN_SPEED = 1.4
 const FONT = preload("res://assets/fonts/PressStart2P-Regular.ttf")
 
 var _time := 0.0
 
 func _ready() -> void:
 	_time = randf() * TAU
+	collision_mask = 2  # detect player body (layer 2)
 	body_entered.connect(_on_body_entered)
 	add_to_group("pickup")
+	$AnimatedSprite2D.play("default")
 
 func _process(delta: float) -> void:
 	_time += delta
 	$AnimatedSprite2D.position.y = sin(_time * BOB_SPEED) * BOB_AMPLITUDE
-	queue_redraw()
-
-func _draw() -> void:
-	var bob := sin(_time * BOB_SPEED) * BOB_AMPLITUDE
-	var spin := _time * SPIN_SPEED
-	var center := Vector2(0.0, bob)
-	var size := 13.0
-
-	# outer glow rings
-	for i in 3:
-		draw_circle(center, size * 1.5 + float(i) * 5.0, Color(1.0, 0.65, 0.0, 0.06 - float(i) * 0.015))
-
-	# diamond body
-	draw_colored_polygon(PackedVector2Array([
-		center + Vector2(0, -size).rotated(spin),
-		center + Vector2(size * 0.55, 0).rotated(spin),
-		center + Vector2(0, size).rotated(spin),
-		center + Vector2(-size * 0.55, 0).rotated(spin),
-	]), Color(1.0, 0.70, 0.0, 0.95))
-
-	# inner highlight
-	var hs := size * 0.45
-	draw_colored_polygon(PackedVector2Array([
-		center + Vector2(0, -hs).rotated(spin),
-		center + Vector2(hs * 0.55, 0).rotated(spin),
-		center + Vector2(0, hs).rotated(spin),
-		center + Vector2(-hs * 0.55, 0).rotated(spin),
-	]), Color(1.0, 0.95, 0.5, 0.9))
-
-	# ground shadow
-	var shadow_alpha := lerpf(0.28, 0.12, (bob + BOB_AMPLITUDE) / (BOB_AMPLITUDE * 2.0))
-	draw_set_transform(Vector2(0.0, 18.0 - bob * 0.3), 0.0, Vector2(1.0, 0.28))
-	draw_circle(Vector2.ZERO, size * 0.9, Color(0, 0, 0, shadow_alpha))
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 func _on_body_entered(body: Node2D) -> void:
 	if not body.is_in_group("player"):
@@ -60,7 +27,7 @@ func _on_body_entered(body: Node2D) -> void:
 	if state.boss_tokens >= TOKENS_TO_SPAWN:
 		state.boss_tokens = 0
 		_spawn_boss_banner()
-		_clear_pickups()
+		get_tree().call_group("main_scene", "spawn_boss")
 	queue_free()
 
 func _spawn_pickup_popup(count: int) -> void:
