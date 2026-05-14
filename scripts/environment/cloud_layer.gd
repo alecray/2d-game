@@ -17,7 +17,7 @@ const CLOUD_ALPHA_HIGH   = 0.09
 var _clouds: Array = []
 
 func _ready() -> void:
-	z_index = -5
+	z_index = 100
 	z_as_relative = false
 	for _i in CLOUD_COUNT:
 		_clouds.append(_make_cloud(_random_pos()))

@@ -11,9 +11,11 @@ config_version=5
 [application]
 
 config/name="2d game"
-config/version="0.1.7"
+config/version="0.1.8"
 run/main_scene="uid://b1jv54q3e0gbd"
 config/features=PackedStringArray("4.6", "Mobile")
+boot_splash/bg_color=Color(0.55634874, 0.44034684, 0.13231027, 1)
+boot_splash/image="uid://dsjbmtmy8ul5c"
 config/icon="res://icon.svg"
 
 [autoload]

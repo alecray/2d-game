@@ -45,6 +45,11 @@ const SHADOW_BOB_ALPHA = 0.55  # opacity at the lowest point of the bob
 const SHAKE_INTENSITY = 7.0
 const SHAKE_STEPS = 6
 const SHAKE_DURATION = 0.35
+const DEATH_SHAKE_INTENSITY = 16.0
+const DEATH_SHAKE_STEPS = 14
+const DEATH_SHAKE_DURATION = 0.7
+const DEATH_ZOOM = Vector2(2.5, 2.5)
+const DEATH_ZOOM_DURATION = 1.4
 const MAP_BOUNDS_BUFFER = 100 # account for edges of the map when clamping player position
 
 signal health_changed(value: int)
@@ -67,6 +72,7 @@ var mana = MAX_MANA:
 	set(value):
 		mana = value
 		mana_changed.emit(int(value))
+var _dying := false
 var knockback_velocity = Vector2.ZERO  # decays each frame, applied on top of movement
 var aim_direction = Vector2.RIGHT      # current aim angle, rate-limited toward the mouse
 const GUN_ROTATION_OFFSET = 0.0
@@ -121,6 +127,8 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _dying:
+		return
 	_handle_movement(delta)
 	_handle_contact_damage(delta)
 	_update_aim(delta)
@@ -161,14 +169,20 @@ func _handle_movement(delta: float) -> void:
 		$AnimatedSprite2D_Player.flip_h = input_direction.x < 0
 
 	if input_direction != Vector2.ZERO:
+		if $AnimatedSprite2D_Player.animation != "Walk":
+			$AnimatedSprite2D_Player.play("Walk")
 		idle_time = 0.0
 		bob_time += delta * BOB_FREQUENCY
 		$AnimatedSprite2D_Player.position.y = abs(sin(bob_time)) * BOB_AMPLITUDE
 	else:
+		if $AnimatedSprite2D_Player.animation != "Idle":
+			$AnimatedSprite2D_Player.play("Idle")
 		bob_time = 0.0
 		idle_time += delta * IDLE_FREQUENCY
 		var idle_y = sin(idle_time) * IDLE_AMPLITUDE
 		$AnimatedSprite2D_Player.position.y = lerpf($AnimatedSprite2D_Player.position.y, idle_y, delta * 5.0)
+
+	_gun.position.y = $AnimatedSprite2D_Player.position.y
 
 	var target_tilt: float = input_direction.x * TILT_AMOUNT
 	$AnimatedSprite2D_Player.rotation = lerpf($AnimatedSprite2D_Player.rotation, target_tilt, delta * 12.0)
@@ -234,16 +248,64 @@ func _input(event: InputEvent) -> void:
 func take_damage(amount: int) -> void:
 	if get_node("/root/GameState").dev_god_mode:
 		return
+	if _dying:
+		return
 	health = max(0, health - amount)  # setter emits health_changed automatically
 	damage_taken.emit(amount)
-	FlashUtils.flash_white($AnimatedSprite2D_Player)
+	if health > 0:
+		FlashUtils.flash_white($AnimatedSprite2D_Player)
 	var blood = CPUParticles2D.new()
 	blood.set_script(BloodParticles)
 	add_sibling(blood)
 	blood.global_position = global_position
 	_shake_camera()
 	if health <= 0:
-		get_tree().change_scene_to_file("res://scenes/game_over.tscn")
+		_start_death()
+
+func _start_death() -> void:
+	_dying = true
+	$HurtBox.monitoring = false
+	_stop_laser()
+	var sprite := $AnimatedSprite2D_Player
+	sprite.rotation = 0.0
+	sprite.position.y = 0.0
+	sprite.play("Death")
+	sprite.animation_finished.connect(_on_death_animation_finished, CONNECT_ONE_SHOT)
+	_death_camera_effect()
+
+func _death_camera_effect() -> void:
+	var vp := get_viewport()
+	if not vp:
+		return
+	var camera := vp.get_camera_2d()
+	if not camera:
+		return
+	var shake := create_tween()
+	for i in DEATH_SHAKE_STEPS:
+		var intensity = DEATH_SHAKE_INTENSITY * (1.0 - float(i) / DEATH_SHAKE_STEPS)
+		var offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)).normalized() * intensity
+		shake.tween_property(camera, "offset", offset, DEATH_SHAKE_DURATION / DEATH_SHAKE_STEPS)
+	shake.tween_property(camera, "offset", Vector2.ZERO, DEATH_SHAKE_DURATION / DEATH_SHAKE_STEPS)
+	create_tween().tween_property(camera, "zoom", DEATH_ZOOM, DEATH_ZOOM_DURATION) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+func _on_death_animation_finished() -> void:
+	await get_tree().create_timer(0.4).timeout
+	var layer := CanvasLayer.new()
+	layer.layer = 100
+	get_tree().root.add_child(layer)
+	var rect := ColorRect.new()
+	rect.color = Color(0, 0, 0, 0)
+	rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(rect)
+	var fade_in := rect.create_tween()
+	fade_in.tween_property(rect, "color:a", 1.0, 0.3)
+	await fade_in.finished
+	get_tree().change_scene_to_file("res://scenes/game_over.tscn")
+	var fade_out := rect.create_tween()
+	fade_out.tween_interval(0.1)
+	fade_out.tween_property(rect, "color:a", 0.0, 0.4)
+	fade_out.tween_callback(layer.queue_free)
 
 func _make_light_texture() -> GradientTexture2D:
 	var grad = Gradient.new()

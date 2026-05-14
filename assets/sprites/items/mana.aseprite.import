@@ -1,0 +1,14 @@
+[remap]
+
+importer="aseprite_wizard.plugin.noop"
+type="PackedDataContainer"
+uid="uid://jg7at4fkev67"
+path="res://.godot/imported/mana.aseprite-315726a2d7e4d2b575c5e96af0c651cf.res"
+
+[deps]
+
+source_file="res://assets/sprites/items/mana.aseprite"
+dest_files=["res://.godot/imported/mana.aseprite-315726a2d7e4d2b575c5e96af0c651cf.res"]
+
+[params]
+
