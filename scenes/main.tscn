@@ -141,10 +141,10 @@ animations = [{
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_o5qli"]
-size = Vector2(32, 32)
+size = Vector2(21, 28)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_jyhfs"]
-size = Vector2(43, 42)
+size = Vector2(53.584892, 50.172153)
 
 [node name="Game" type="Node2D" unique_id=370655090]
 script = ExtResource("1_jyhfs")
@@ -195,6 +195,7 @@ metadata/_aseprite_wizard_config_ = {
 metadata/_aseprite_wizard_source_file_hash_ = "79bc60f65bb1fb36bcbee31bc2939840"
 
 [node name="CollisionShape2D_Player" type="CollisionShape2D" parent="CharacterBody2D_Player" unique_id=290864928]
+position = Vector2(-0.5, 0)
 shape = SubResource("RectangleShape2D_o5qli")
 
 [node name="Camera2D" type="Camera2D" parent="CharacterBody2D_Player" unique_id=1807067164]
@@ -202,7 +203,7 @@ shape = SubResource("RectangleShape2D_o5qli")
 [node name="HurtBox" type="Area2D" parent="CharacterBody2D_Player" unique_id=1944499096]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D_Player/HurtBox" unique_id=487606519]
-position = Vector2(0.5, 1)
+position = Vector2(0.5, 0.49999964)
 scale = Vector2(0.9890848, 0.9766374)
 shape = SubResource("RectangleShape2D_jyhfs")
 

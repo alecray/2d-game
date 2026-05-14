@@ -4,7 +4,7 @@ extends CharacterBody2D
 var SPEED = 200.0            # how fast the player moves
 var MAX_HEALTH = 100
 const DAMAGE_COOLDOWN = 0.5    # seconds of invincibility after getting hit
-const BULLET_SCENE = preload("res://prefabs/bullet.tscn")
+const BULLET_SCENE = preload("res://prefabs/projectiles/bullet.tscn")
 const KNOCKBACK_FORCE = 1200.0  # how hard enemies push the player back on contact
 const GUN_TIP_LOCAL = Vector2(40.0, 0.0)  # tip of the 64px barrel in gun local space (offset 8 + half-width 32)
 var FIRE_RATE = 0.1          # seconds between shots while holding the mouse button
@@ -84,6 +84,9 @@ var _shadow: Node2D
 func _ready() -> void:
 	add_to_group("player")
 	$HurtBox.add_to_group("player_hitbox")
+	collision_layer = 2  # player body on layer 2
+	collision_mask = 1   # only block on walls (layer 1), pass through enemies
+	$HurtBox.collision_mask = 4  # detect enemy bodies (layer 3) for contact damage
 	# attach the white flash shader so we can trigger it when the player takes damage
 	var shader_mat = ShaderMaterial.new()
 	shader_mat.shader = preload("res://assets/shaders/white_flash.gdshader")
@@ -196,6 +199,8 @@ func _handle_contact_damage(delta: float) -> void:
 	for body in $HurtBox.get_overlapping_bodies():
 		# only take damage once per cooldown window to avoid instant death on overlap
 		if body.is_in_group("enemy") and damage_cooldown <= 0:
+			if body.has_method("is_contact_damage_active") and not body.is_contact_damage_active():
+				continue
 			take_damage(body.DAMAGE)
 			knockback_velocity = (global_position - body.global_position).normalized() * KNOCKBACK_FORCE
 			damage_cooldown = DAMAGE_COOLDOWN

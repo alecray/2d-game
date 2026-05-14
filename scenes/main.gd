@@ -38,6 +38,7 @@ const WALL_ROTATION_RANGE = 0.2
 const FONT_BOSS = preload("res://assets/fonts/PressStart2P-Regular.ttf")
 const BossDeathParticles = preload("res://scripts/effects/enemy_death_particles.gd")
 const BossHealthBarScript = preload("res://scripts/ui/boss_health_bar.gd")
+const BossArrowScene = preload("res://prefabs/ui/boss_arrow.tscn")
 
 var spawn_timer = 0.0
 var _grass_scene: PackedScene
@@ -67,7 +68,9 @@ func _ready() -> void:
 		_bg_sprite.texture = tex
 	_grass_scene = load(state.map_grass_scene) if state.map_grass_scene else GRASS_SCENE_DEFAULT
 	for entry in state.map_spawn_table:
-		_spawn_table.append({"scene": load(entry["scene"]) as PackedScene, "weight": float(entry["weight"])})
+		var w := float(entry["weight"])
+		if w > 0.0:
+			_spawn_table.append({"scene": load(entry["scene"]) as PackedScene, "weight": w})
 	var dust = CPUParticles2D.new()
 	dust.set_script(DUST_SCRIPT)
 	player.add_child(dust)
@@ -235,6 +238,13 @@ func spawn_boss() -> void:
 	bar.set_script(BossHealthBarScript)
 	hud_layer.add_child(bar)
 	bar.setup(boss)
+
+	var arrow_layer := CanvasLayer.new()
+	arrow_layer.layer = 20
+	get_tree().root.add_child(arrow_layer)
+	var arrow := BossArrowScene.instantiate()
+	arrow_layer.add_child(arrow)
+	arrow.setup(boss)
 
 ## Pops all enemies and pickups with explosion particles to clear the arena for the boss.
 func _clear_battlefield() -> void:

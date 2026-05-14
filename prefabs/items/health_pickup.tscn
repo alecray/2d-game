@@ -1,0 +1,86 @@
+[gd_scene format=4 uid="uid://dltpscjkhomu"]
+
+[ext_resource type="Script" uid="uid://h1eyinbehaob" path="res://scripts/effects/health_pickup.gd" id="1_health"]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_mlljy"]
+_data = PackedByteArray("AAADAAUAAAABAAAAYAAAAEAAAADkAAAAUklGRtwAAABXRUJQVlA4TNAAAAAvX8APEC9AJm2b7F8ZY9/0TFHbRmyuVMbdewI4hYwksbkrL1A1XujnPwA87xhaKbf8B1e1bcUNOOAkDlgx0PUUdPU5KP7FZHi0zJ8R/WfgtpEi7zEudD/hJlE4iy2Az1XM14XGKJjeR9wHCu7AeLoOcuy7jyLYNdnXU/mcFM/hdOZdrhqAMwXw9a1/yefiv9wA1PVKx2ZXS5JGs2IkkcjABDLgDp71uIMMSvpoUmOHqGpS1cdNVOQrV4msp+I5KZ/D8vNoYAJ4kwP4oR7lzaE4")
+size_override = Vector2(96, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_421dd"]
+atlas = SubResource("PortableCompressedTexture2D_mlljy")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ky84p"]
+atlas = SubResource("PortableCompressedTexture2D_mlljy")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jvs6e"]
+atlas = SubResource("PortableCompressedTexture2D_mlljy")
+region = Rect2(64, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3owcr"]
+atlas = SubResource("PortableCompressedTexture2D_mlljy")
+region = Rect2(0, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_el3ql"]
+atlas = SubResource("PortableCompressedTexture2D_mlljy")
+region = Rect2(32, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_44xeb"]
+atlas = SubResource("PortableCompressedTexture2D_mlljy")
+region = Rect2(64, 32, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_gcdnt"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_421dd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ky84p")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jvs6e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3owcr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_el3ql")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_44xeb")
+}],
+"loop": true,
+"name": &"default",
+"speed": 10.0
+}]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_health"]
+
+[node name="HealthPickup" type="Area2D" unique_id=1001]
+script = ExtResource("1_health")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1002]
+texture_filter = 1
+sprite_frames = SubResource("SpriteFrames_gcdnt")
+metadata/_aseprite_wizard_interface_config_ = {
+"pending_changes": {}
+}
+metadata/_aseprite_wizard_config_ = {
+"embed_tex": true,
+"layers": [],
+"o_ex_p": "",
+"o_folder": "",
+"o_name": "",
+"only_visible": false,
+"scale": "1.0",
+"should_round_fps": true,
+"slice": "",
+"source": "res://assets/sprites/items/health.aseprite",
+"source_uid": 2415290552062938704
+}
+metadata/_aseprite_wizard_source_file_hash_ = "c7b7e4a8d7af11651bf6116730fad131"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1003]
+shape = SubResource("CircleShape2D_health")

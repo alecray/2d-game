@@ -1,6 +1,6 @@
 extends Control
 
-const MAP_CARD_SCENE = preload("res://prefabs/map_card.tscn")
+const MAP_CARD_SCENE = preload("res://prefabs/ui/map_card.tscn")
 
 const MAPS = [
 	{
@@ -52,8 +52,8 @@ const MAPS = [
 		"world_color": Color(0.30, 0.30, 0.50),
 		"spawn_table": [
 			{"scene": "res://prefabs/enemies/spider.tscn", "weight": 55},
-			{"scene": "res://prefabs/enemies/blob.tscn", "weight": 25},
-			{"scene": "res://prefabs/enemies/triangle.tscn", "weight": 20},
+			{"scene": "res://prefabs/enemies/blob.tscn", "weight": 45},
+			{"scene": "res://prefabs/enemies/triangle.tscn", "weight": 0},
 		],
 		"boss_scene": "res://prefabs/enemies/boss_goblin.tscn",
 		"boss_health_mult": 2.5,

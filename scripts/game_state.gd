@@ -16,7 +16,7 @@ var map_canopy_shadow: Color = Color(0.22, 0.55, 0.17, 0.28)
 var map_spawn_table: Array = [
 	{"scene": "res://prefabs/enemies/spider.tscn", "weight": 55},
 	{"scene": "res://prefabs/enemies/blob.tscn", "weight": 25},
-	{"scene": "res://prefabs/enemies/triangle.tscn", "weight": 20},
+	{"scene": "res://prefabs/enemies/triangle.tscn", "weight": 0},
 ]
 var boss_tokens: int = 0               # tokens collected this run; reaching 5 spawns the boss
 var dev_boss_token_force: bool = false  # set by dev menu; makes boss tokens drop 100% of the time

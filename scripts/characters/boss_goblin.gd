@@ -11,8 +11,8 @@ const SPREAD_COUNT = 3         # bullets per burst
 const SPREAD_ANGLE = 0.35      # radians between spread bullets
 const MELEE_RANGE = 180.0      # distance at which the Melee animation plays
 const BOSS_XP_REWARD = 200
-const ENEMY_BULLET = preload("res://prefabs/enemy_bullet.tscn")
-const CRATE_SCENE_BOSS = preload("res://prefabs/crate.tscn")
+const ENEMY_BULLET = preload("res://prefabs/projectiles/enemy_bullet.tscn")
+const CRATE_SCENE_BOSS = preload("res://prefabs/items/crate.tscn")
 const FloatingTextBoss = preload("res://scripts/utils/floating_text.gd")
 const EnemyDeathParticlesBoss = preload("res://scripts/effects/enemy_death_particles.gd")
 
@@ -26,6 +26,8 @@ func _ready() -> void:
 	max_health = 300
 	fire_timer = randf_range(0.0, FIRE_RATE)
 	super._ready()
+	is_invisible = false
+	modulate.a = 1.0
 	add_to_group("boss")
 
 ## Called by main.gd at spawn to apply per-map stat tuning and visual setup.
@@ -37,8 +39,16 @@ func make_boss(health_mult: float, damage_mult: float) -> void:
 	aura_color = Color(0.9, 0.1, 0.1)
 	queue_redraw()
 
+func _get_melee_range() -> float:
+	return MELEE_RANGE
+
+func _get_attack_duration() -> float:
+	return 1.4  # 7 frames × 0.2s at 5 FPS
+
 func _physics_process(delta: float) -> void:
 	var player = get_tree().get_first_node_in_group("player")
+	_attack_cooldown -= delta
+	_attack_timer = maxf(_attack_timer - delta, 0.0)
 
 	var dist := INF
 	if player:
@@ -53,6 +63,11 @@ func _physics_process(delta: float) -> void:
 		if fire_timer <= 0 and dist <= SHOOT_RANGE:
 			_shoot_spread(to_player)
 			fire_timer = FIRE_RATE_ENRAGED if health < max_health * 0.5 else FIRE_RATE
+
+		if dist < MELEE_RANGE and _attack_cooldown <= 0.0:
+			var dur := _get_attack_duration()
+			_attack_timer = dur
+			_attack_cooldown = dur + ATTACK_COOLDOWN
 	else:
 		current_speed = move_toward(current_speed, SPEED, ACCELERATION * delta)
 
@@ -111,7 +126,7 @@ func _destroy_obstacle(collider: Node) -> void:
 
 func _draw() -> void:
 	# square ground shadow in local space (320×320 at 2× world scale)
-	draw_rect(Rect2(-80, 50, 160, 80), Color(0, 0, 0, 0.38))
+	draw_rect(Rect2(-50, 115, 100, 45), Color(0, 0, 0, 0.18))
 	# boss-scale aura rings — 5× larger radii than the base enemy
 	if aura_color.a > 0.0:
 		var pulse := sin(_aura_time * 3.0) * 0.35 + 0.65

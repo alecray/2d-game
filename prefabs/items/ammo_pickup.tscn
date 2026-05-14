@@ -1,0 +1,79 @@
+[gd_scene format=4 uid="uid://b2d4equywwi4w"]
+
+[ext_resource type="Script" uid="uid://chcg2yrhynfqu" path="res://scripts/effects/ammo_pickup.gd" id="1_ammo"]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_jvpak"]
+_data = PackedByteArray("AAADAAUAAAABAAAAYAAAAEAAAAAqAQAAUklGRiIBAABXRUJQVlA4TBYBAAAvX8APEEegqI0k5H5Mrsi/mJOitpGkNvrpZ94AHXiURpLC/BMcDlqi/3aSmf8AAMGqIyFBbfce7I9u72aDq8h260YULgVREAVRCAVTCIXy9uPK1870N6L/jtw2ciRp0u5J3vAJk4inmwkzO0NiNHnH8sguKHx3gf2uYxhyVNYVmOTwLkp5R/hk8A49xZ3h769fPQodemo7YyFAO+RUd6M1H64NtENPYefELOvQw3fe1yHZabxjn+2OKWT1L6Md57Fd9RR26vmb4ulmQnpkF3roTsGF77wGQ47q4R1lYv7l8o6vEj4ZvONSwt9fv3oUXvCuM8RCFKBdHwGt+XBtFVjXdxitse66H/3bn8S2sTMYZu08211XYA==")
+size_override = Vector2(96, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d6ebh"]
+atlas = SubResource("PortableCompressedTexture2D_jvpak")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_duiw2"]
+atlas = SubResource("PortableCompressedTexture2D_jvpak")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tfita"]
+atlas = SubResource("PortableCompressedTexture2D_jvpak")
+region = Rect2(64, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_utd5e"]
+atlas = SubResource("PortableCompressedTexture2D_jvpak")
+region = Rect2(0, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bltm4"]
+atlas = SubResource("PortableCompressedTexture2D_jvpak")
+region = Rect2(32, 32, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_qc08u"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_d6ebh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_duiw2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tfita")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_utd5e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bltm4")
+}],
+"loop": true,
+"name": &"default",
+"speed": 10.0
+}]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_ammo"]
+
+[node name="AmmoPickup" type="Area2D" unique_id=1004]
+script = ExtResource("1_ammo")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1005]
+texture_filter = 1
+sprite_frames = SubResource("SpriteFrames_qc08u")
+metadata/_aseprite_wizard_interface_config_ = {
+"pending_changes": {}
+}
+metadata/_aseprite_wizard_config_ = {
+"embed_tex": true,
+"layers": [],
+"o_ex_p": "",
+"o_folder": "",
+"o_name": "",
+"only_visible": false,
+"scale": "1.0",
+"should_round_fps": true,
+"slice": "",
+"source": "res://assets/sprites/items/ammo.aseprite",
+"source_uid": 4270155126569343242
+}
+metadata/_aseprite_wizard_source_file_hash_ = "30672a23289e6ee66d00b858a0693338"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1006]
+shape = SubResource("CircleShape2D_ammo")

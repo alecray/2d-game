@@ -1,15 +1,18 @@
 ## Ranged enemy — keeps its distance, strafes, and fires purple bullets at the player.
-## When hit it briefly charges like a normal enemy before retreating again.
+## When hit it briefly flees before retreating back into orbit.
+## Stops and plays "Range" animation each time it fires.
 extends "res://scripts/characters/base_enemy.gd"
 
 const PREFERRED_RANGE = 230.0    # tries to stay roughly this far from the player
 const TOO_CLOSE_RANGE = 130.0    # retreats if the player gets closer than this
 const FIRE_RATE = 2.0            # seconds between shots
 const SHOOT_RANGE = 350.0        # won't shoot if the player is further away than this
-const ENEMY_BULLET = preload("res://prefabs/enemy_bullet.tscn")
+const RANGED_ATTACK_DURATION = 0.4  # seconds frozen in Range animation per shot (2× the 0.2s cycle)
+const ENEMY_BULLET = preload("res://prefabs/projectiles/enemy_bullet.tscn")
 
 var fire_timer = 0.0
 var _strafe_sign = 1  # which side to circle — randomised at spawn so groups orbit differently
+var _ranged_attack_timer := 0.0
 
 func _ready() -> void:
 	SPEED = 75.0
@@ -22,6 +25,18 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	var player = get_tree().get_first_node_in_group("player")
+
+	# === RANGED ATTACK STATE: frozen for the animation duration ===
+	if _ranged_attack_timer > 0.0:
+		_ranged_attack_timer -= delta
+		knockback_velocity = knockback_velocity.lerp(Vector2.ZERO, delta * KNOCKBACK_FRICTION)
+		velocity = knockback_velocity
+		rage_timer -= delta
+		if aura_color.a > 0.0:
+			_aura_time += delta
+			queue_redraw()
+		move_and_slide()
+		return
 
 	if player:
 		var dist = global_position.distance_to(player.global_position)
@@ -45,18 +60,30 @@ func _physics_process(delta: float) -> void:
 			direction = perp
 			current_speed = move_toward(current_speed, SPEED * 0.7, ACCELERATION * delta)
 
-		# shoot at the player periodically while within range
+		# === RANGED ATTACK TRIGGER ===
 		fire_timer -= delta
 		if fire_timer <= 0 and dist <= SHOOT_RANGE:
+			direction = to_player
+			if direction.x != 0:
+				$AnimatedSprite2D.flip_h = _flip_facing != (direction.x < 0)
 			_shoot(to_player)
 			fire_timer = FIRE_RATE
+			_ranged_attack_timer = RANGED_ATTACK_DURATION
+			velocity = Vector2.ZERO
+			move_and_slide()
+			_play_anim("Range")
+			return
 
 	rage_timer -= delta
+	if aura_color.a > 0.0:
+		_aura_time += delta
+		queue_redraw()
 	velocity = direction * current_speed + _get_separation()
+	knockback_velocity = knockback_velocity.lerp(Vector2.ZERO, delta * KNOCKBACK_FRICTION)
 	move_and_slide()
 
 	if direction.x != 0:
-		$AnimatedSprite2D.flip_h = direction.x < 0
+		$AnimatedSprite2D.flip_h = _flip_facing != (direction.x < 0)
 
 	_play_anim("Walk" if velocity.length() > 5.0 else "Idle")
 

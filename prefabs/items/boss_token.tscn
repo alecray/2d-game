@@ -1,0 +1,103 @@
+[gd_scene format=4 uid="uid://cw5js6m7stlp7"]
+
+[ext_resource type="Script" uid="uid://bc2n1w6h2flbw" path="res://scripts/effects/boss_token.gd" id="1_btoken"]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_2tkjx"]
+_data = PackedByteArray("AAADAAUAAAABAAAAYAAAAGAAAADWAQAAUklGRs4BAABXRUJQVlA4TMIBAAAvX8AXED9ANGAhr0q+cJf/m0fUtG0Edf326jAc2KN5MMgELIRYAT6//oWUmP8QBNIBW73bTN7egGQJdOO2AakfwMtEzpXZr5rAy7nr3XbQu5fi3lX/P7GIMUn7HNH/CaALKSKPMU8kOobuTHKeQWQczV4e4tQgf2xWlPwZWzL8Ge3kjx5TZmahHQezW7tdq2Z9/74+Dwye2ewMaW96OuNBVdWRYkXEwIcegSaxVu0pn0NNRAQAgXIZCJftYUSg7PT7jpwpVibmGQ4zz9DVpq5t3x4ET2hOIA9dtgcAISvdIDhSrOz6TCJ56U1E8tKb+KSsna2km0oPe7NxFOmm0t7+B8+4knPdVcVmZlNY/7ST46o7xWszs1BVfzxmqfaf7JPZMkP749Gx23lg8Ox2eaqqD1kn7SVmqGpxfRZBtccEMdYfgECTvFYNlM3lAYFyGQAomwG6LPTrNWYRY3zII/5V227ZeUw8u9rWC5e61pWxh+FDbeQh9vGlYdzHLAbw4AAqu0JTdCSR8qSsna2kK2xcSVs45LGZWdv63bG4XWGqqg9FrUsjVu3RNiDQVUG/XmPjdsuucetF47h5dHUw7mNjCgY=")
+size_override = Vector2(96, 96)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_okf17"]
+atlas = SubResource("PortableCompressedTexture2D_2tkjx")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hugn5"]
+atlas = SubResource("PortableCompressedTexture2D_2tkjx")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1qxmr"]
+atlas = SubResource("PortableCompressedTexture2D_2tkjx")
+region = Rect2(64, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m0v8j"]
+atlas = SubResource("PortableCompressedTexture2D_2tkjx")
+region = Rect2(0, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tp6pm"]
+atlas = SubResource("PortableCompressedTexture2D_2tkjx")
+region = Rect2(32, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h3oi4"]
+atlas = SubResource("PortableCompressedTexture2D_2tkjx")
+region = Rect2(64, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2p8d6"]
+atlas = SubResource("PortableCompressedTexture2D_2tkjx")
+region = Rect2(0, 64, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2p6cs"]
+atlas = SubResource("PortableCompressedTexture2D_2tkjx")
+region = Rect2(32, 64, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_gsxms"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_okf17")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hugn5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1qxmr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_m0v8j")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tp6pm")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h3oi4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2p8d6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2p6cs")
+}],
+"loop": true,
+"name": &"default",
+"speed": 10.0
+}]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_btoken"]
+radius = 14.0
+
+[node name="BossToken" type="Area2D" unique_id=658759986]
+script = ExtResource("1_btoken")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1253561302]
+texture_filter = 1
+sprite_frames = SubResource("SpriteFrames_gsxms")
+frame = 6
+frame_progress = 0.36766815
+metadata/_aseprite_wizard_interface_config_ = {
+"pending_changes": {}
+}
+metadata/_aseprite_wizard_config_ = {
+"embed_tex": true,
+"layers": [],
+"o_ex_p": "",
+"o_folder": "",
+"o_name": "",
+"only_visible": false,
+"scale": "1.0",
+"should_round_fps": true,
+"slice": "",
+"source": "res://assets/sprites/items/boss_key.aseprite",
+"source_uid": 4753496805146674962
+}
+metadata/_aseprite_wizard_source_file_hash_ = "6b545b7a109ec5da45ad6558c72dbb01"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1230714633]
+shape = SubResource("CircleShape2D_btoken")

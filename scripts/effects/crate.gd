@@ -1,6 +1,6 @@
 extends Area2D
 
-const UPGRADE_SCREEN_SCENE = preload("res://prefabs/upgrade_screen.tscn")
+const UPGRADE_SCREEN_SCENE = preload("res://prefabs/ui/upgrade_screen.tscn")
 const FONT = preload("res://assets/fonts/PressStart2P-Regular.ttf")
 
 const BAD_CRATE_CHANCE = 0.2
@@ -24,6 +24,7 @@ const CURSES := [
 
 func _ready() -> void:
 	_time = randf() * TAU  # stagger phase so crates don't all bob in sync
+	collision_mask = 2  # detect player body (layer 2)
 	body_entered.connect(_on_body_entered)
 	add_to_group("pickup")
 

@@ -2,8 +2,9 @@ extends Area2D
 
 const BOB_SPEED = 2.8
 const BOB_AMPLITUDE = 3.0
-const COLLECT_RISE = 18.0    # pixels to float upward during the collect animation
-const COLLECT_TIME = 0.3     # seconds the collect animation lasts
+const COLLECT_RISE = 18.0
+const COLLECT_TIME = 0.3
+const HEAL_AMOUNT = 25
 
 const FloatingText = preload("res://scripts/utils/floating_text.gd")
 
@@ -14,7 +15,7 @@ func _ready() -> void:
 	_time = randf() * TAU
 	collision_mask = 2  # detect player body (layer 2)
 	body_entered.connect(_on_body_entered)
-	if $AnimatedSprite2D.sprite_frames:
+	if $AnimatedSprite2D.sprite_frames and $AnimatedSprite2D.sprite_frames.has_animation("default"):
 		$AnimatedSprite2D.play("default")
 	add_to_group("pickup")
 
@@ -27,11 +28,12 @@ func _on_body_entered(body: Node2D) -> void:
 	if not body.is_in_group("player") or _collecting:
 		return
 	_collecting = true
-	get_node("/root/PlayerStats").add_coins(1)
+	var healed := mini(HEAL_AMOUNT, body.MAX_HEALTH - body.health)
+	body.health = mini(body.MAX_HEALTH, body.health + HEAL_AMOUNT)
 
 	var popup := FloatingText.new()
-	popup.text = "+1"
-	popup.add_theme_color_override("font_color", Color(1.0, 0.85, 0.1, 1.0))
+	popup.text = "+" + str(healed) + " HP"
+	popup.add_theme_color_override("font_color", Color(0.2, 1.0, 0.3, 1.0))
 	popup.add_theme_font_size_override("font_size", 8)
 	get_parent().add_child(popup)
 	popup.global_position = global_position
