@@ -12,7 +12,6 @@ const SPREAD_ANGLE = 0.35      # radians between spread bullets
 const MELEE_RANGE = 180.0      # distance at which the Melee animation plays
 const BOSS_XP_REWARD = 200
 const ENEMY_BULLET = preload("res://prefabs/projectiles/enemy_bullet.tscn")
-const CRATE_SCENE_BOSS = preload("res://prefabs/items/crate.tscn")
 const FloatingTextBoss = preload("res://scripts/utils/floating_text.gd")
 const EnemyDeathParticlesBoss = preload("res://scripts/effects/enemy_death_particles.gd")
 
@@ -157,10 +156,6 @@ func die() -> void:
 	particles.base_amount = 200
 	get_parent().add_child(particles)
 	particles.global_position = global_position
-
-	var crate = CRATE_SCENE_BOSS.instantiate()
-	crate.position = get_parent().to_local(global_position)
-	get_parent().call_deferred("add_child", crate)
 
 	boss_died.emit()
 	queue_free.call_deferred()

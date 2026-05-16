@@ -50,7 +50,6 @@ var unlocked_maps: Array = []  # map names unlocked by defeating bosses
 var owned_guns: Array = []  # purchased gun IDs; pistol is always available without being listed
 var equipped_gun: String = "gun1"
 var levels: Dictionary = {}
-var difficulty: int = 1  # 1-100, persisted between runs
 
 func _ready() -> void:
 	for key in STAT_DEFS:
@@ -84,29 +83,6 @@ func equip_gun(id: String) -> void:
 	if owns_gun(id):
 		equipped_gun = id
 		_save()
-
-func set_difficulty(d: int) -> void:
-	difficulty = clampi(d, 1, 100)
-	_save()
-
-# --- difficulty scaling (logarithmic: t=0 at difficulty 1, t=1 at difficulty 100) ---
-
-func diff_scale() -> float:
-	if difficulty <= 1:
-		return 0.0
-	return log(float(difficulty)) / log(100.0)
-
-func enemy_stat_mult() -> float:
-	return lerp(1.0, 3.0, diff_scale())
-
-func coin_chance_mult() -> float:
-	return lerp(1.0, 4.0, diff_scale())
-
-func crate_chance_mult() -> float:
-	return lerp(1.0, 6.0, diff_scale())
-
-func bad_crate_chance() -> float:
-	return lerp(0.2, 1.0, diff_scale())
 
 # --- mutation ---
 
@@ -171,7 +147,6 @@ func _save() -> void:
 	cfg.set_value("stats", "unlocked_maps", unlocked_maps)
 	cfg.set_value("stats", "owned_guns", owned_guns)
 	cfg.set_value("stats", "equipped_gun", equipped_gun)
-	cfg.set_value("stats", "difficulty", difficulty)
 	for key in levels:
 		cfg.set_value("levels", key, levels[key])
 	cfg.save(SAVE_PATH)
@@ -186,6 +161,5 @@ func _load() -> void:
 	unlocked_maps = cfg.get_value("stats", "unlocked_maps", [])
 	owned_guns = cfg.get_value("stats", "owned_guns", [])
 	equipped_gun = cfg.get_value("stats", "equipped_gun", "gun1")
-	difficulty = cfg.get_value("stats", "difficulty", 1)
 	for key in levels:
 		levels[key] = cfg.get_value("levels", key, 0)

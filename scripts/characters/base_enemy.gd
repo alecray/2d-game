@@ -308,7 +308,6 @@ func die() -> void:
 	queue_free.call_deferred()
 
 func _drop_loot() -> void:
-	var _ps := get_node("/root/PlayerStats")
 	var pos: Vector2 = get_parent().to_local(global_position)
 
 	if get_node("/root/GameState").dev_boss_token_force:
@@ -324,7 +323,7 @@ func _drop_loot() -> void:
 		token.position = pos
 		get_parent().call_deferred("add_child", token)
 		return
-	accum += CRATE_DROP_CHANCE * _ps.crate_chance_mult()
+	accum += CRATE_DROP_CHANCE
 	if r < accum:
 		var crate = CRATE_SCENE.instantiate()
 		crate.position = pos
@@ -342,7 +341,7 @@ func _drop_loot() -> void:
 		pickup.position = pos
 		get_parent().call_deferred("add_child", pickup)
 		return
-	accum += COIN_DROP_CHANCE * _ps.coin_chance_mult()
+	accum += COIN_DROP_CHANCE
 	if r < accum:
 		var coin = COIN_SCENE.instantiate()
 		coin.position = pos

@@ -241,8 +241,7 @@ func spawn_enemy(cluster_origin: Vector2, is_elite: bool = false, pack_id: int =
 		enemy.pack_id = pack_id
 	elif randf() < RARE_CHANCE:
 		enemy.make_rare()
-	var diff_mult: float = get_node("/root/PlayerStats").enemy_stat_mult()
-	enemy.apply_difficulty(diff_scale * diff_mult)
+	enemy.apply_difficulty(diff_scale)
 
 ## Spawns the map's boss when called by boss_token.gd via the main_scene group.
 func spawn_boss() -> void:
@@ -304,18 +303,28 @@ func _clear_battlefield() -> void:
 
 func _on_boss_defeated() -> void:
 	_boss_alive = false
-	get_node("/root/GameState").boss_alive = false
-	var unlocks: String = get_node("/root/GameState").map_boss_unlocks
-	if not unlocks.is_empty():
-		get_node("/root/PlayerStats").unlock_map(unlocks)
+	var state := get_node("/root/GameState")
+	state.boss_alive = false
+	var unlocks: String = state.map_boss_unlocks
+	var ps := get_node("/root/PlayerStats")
+	var is_new_unlock: bool = not unlocks.is_empty() and not ps.unlocked_maps.has(unlocks)
+	if is_new_unlock:
+		ps.unlock_map(unlocks)
+		state.just_unlocked_map = unlocks
+	else:
+		state.just_unlocked_map = ""
+	var next := "res://scenes/map_selection.tscn" if is_new_unlock else "res://scenes/stats_screen.tscn"
 	_spawn_boss_defeated_banner()
+	get_tree().create_timer(2.8).timeout.connect(
+		func(): get_tree().change_scene_to_file(next), CONNECT_ONE_SHOT
+	)
 
 func _spawn_boss_defeated_banner() -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 15
 	get_tree().root.add_child(layer)
 	var lbl := Label.new()
-	lbl.text = "BOSS DEFEATED!"
+	lbl.text = "BOSS FELLED!"
 	lbl.add_theme_font_override("font", FONT_BOSS)
 	lbl.add_theme_font_size_override("font_size", 22)
 	lbl.add_theme_color_override("font_color", Color(0.2, 1.0, 0.3))

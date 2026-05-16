@@ -66,6 +66,8 @@ const MAPS = [
 
 func _ready() -> void:
 	var stats = get_node("/root/PlayerStats")
+	var just_unlocked: String = get_node("/root/GameState").just_unlocked_map
+	var unlocking_card = null
 	for data in MAPS:
 		var card = MAP_CARD_SCENE.instantiate()
 		_grid.add_child(card)
@@ -74,8 +76,21 @@ func _ready() -> void:
 		if map_name != "Cracked Plains" and not stats.unlocked_maps.has(map_name):
 			card_data["locked"] = true
 		card.setup(card_data)
+		if not just_unlocked.is_empty() and map_name == just_unlocked:
+			unlocking_card = card
 		card.map_selected.connect(_on_map_selected)
 	$VBoxContainer/Button_Back.pressed.connect(_on_back)
+	if unlocking_card:
+		for card in _grid.get_children():
+			card.disabled = true
+		$VBoxContainer/Button_Back.disabled = true
+		unlocking_card.unlock_finished.connect(_on_unlock_finished)
+		unlocking_card.animate_unlock()
+
+func _on_unlock_finished() -> void:
+	get_node("/root/GameState").just_unlocked_map = ""
+	await get_tree().create_timer(0.8).timeout
+	get_tree().change_scene_to_file("res://scenes/stats_screen.tscn")
 
 func _on_map_selected(data: Dictionary) -> void:
 	var state = get_node("/root/GameState")
@@ -97,4 +112,8 @@ func _on_map_selected(data: Dictionary) -> void:
 	get_tree().change_scene_to_file(data.get("scene", "res://scenes/main.tscn"))
 
 func _on_back() -> void:
-	get_tree().change_scene_to_file("res://scenes/game_over.tscn")
+	var state := get_node("/root/GameState")
+	var target := "res://scenes/stats_screen.tscn" \
+		if state.kills > 0 or state.boss_triggered \
+		else "res://scenes/title_screen.tscn"
+	get_tree().change_scene_to_file(target)

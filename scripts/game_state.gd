@@ -27,6 +27,7 @@ var map_boss_damage_mult: float = 1.0
 var map_boss_unlocks: String = ""       # map name to unlock when this map's boss is defeated
 var boss_alive: bool = false
 var boss_triggered: bool = false        # true once boss has been spawned this run; never resets
+var just_unlocked_map: String = ""      # set on boss death; consumed by map_selection to animate the unlock
 
 func reset() -> void:
 	kills = 0
