@@ -136,6 +136,10 @@ func unlock_map(map_name: String) -> void:
 
 func reset() -> void:
 	xp = 0
+	coins = 0
+	owned_guns = []
+	equipped_gun = "gun1"
+	unlocked_maps = []
 	for key in levels:
 		levels[key] = 0
 	_save()

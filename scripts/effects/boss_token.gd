@@ -4,8 +4,10 @@ const TOKENS_TO_SPAWN = 5
 const BOB_SPEED = 1.8
 const BOB_AMPLITUDE = 5.0
 const FONT = preload("res://assets/fonts/PressStart2P-Regular.ttf")
+const GroundShadow = preload("res://scripts/effects/ground_shadow.gd")
 
 var _time := 0.0
+var _shadow: Node2D
 
 func _ready() -> void:
 	_time = randf() * TAU
@@ -13,10 +15,21 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	add_to_group("pickup")
 	$AnimatedSprite2D.play("default")
+	_shadow = Node2D.new()
+	_shadow.set_script(GroundShadow)
+	_shadow.position = Vector2(0.0, 25.0)
+	_shadow.scale = Vector2(1.0, 0.28)
+	_shadow.modulate = Color(0, 0, 0, 0.3)
+	_shadow.z_index = -1
+	add_child(_shadow)
 
 func _process(delta: float) -> void:
 	_time += delta
-	$AnimatedSprite2D.position.y = sin(_time * BOB_SPEED) * BOB_AMPLITUDE
+	var bob := sin(_time * BOB_SPEED) * BOB_AMPLITUDE
+	$AnimatedSprite2D.position.y = bob
+	var bob_t := (bob + BOB_AMPLITUDE) / (BOB_AMPLITUDE * 2.0)
+	_shadow.scale.x = lerp(0.6, 1.0, bob_t)
+	_shadow.modulate.a = lerp(0.12, 0.35, bob_t)
 
 func _on_body_entered(body: Node2D) -> void:
 	if not body.is_in_group("player"):

@@ -6,8 +6,11 @@ const GRASS_SCENE_DEFAULT = preload("res://prefabs/environment/grass1.tscn")
 const WALL_SCRIPT = preload("res://scripts/environment/wall.gd")
 const DUST_SCRIPT = preload("res://scripts/environment/dust_particles.gd")
 const TreeGenerator = preload("res://scripts/environment/tree_generator.gd")
-# Drop your tileable stone texture at this path to apply it to all walls
-const WALL_TEXTURE = "res://assets/sprites/environment/wall1.png"
+const WALL_TEXTURES = [
+	"res://assets/sprites/environment/wall1.png",
+	"res://assets/sprites/environment/wall2.png",
+]
+const WALL_TEXTURE_END = "res://assets/sprites/environment/wall3.png"
 const TorchLight = preload("res://scripts/environment/torch_light.gd")
 const CloudLayer = preload("res://scripts/environment/cloud_layer.gd")
 const TORCH_ON_WALL_CHANCE = 0.25
@@ -26,11 +29,8 @@ const RARE_CHANCE = 0.02    # 2% chance any individual enemy spawns as rare (gol
 const WORLD_SIZE = 2700
 const MAP_BOUNDS = Vector2(1576, 1440)  # half-extents of the background sprite — matches player.gd WORLD_BOUNDS
 const GRASS_COUNT = 100
-const RUIN_CLUSTER_COUNT = 24
-const RUIN_MIN_PIECES = 2
-const RUIN_MAX_PIECES = 8
-const RUIN_SCATTER = 60.0
-const WALL_ROTATION_RANGE = 0.2
+const RUIN_CLUSTER_COUNT = 14
+const WALL_UNIT = 32  # one tile — matches TILE_SIZE in wall.gd so each block is exactly one texture tile
 
 @onready var player = $CharacterBody2D_Player
 @onready var grass_parent = $GrassParent
@@ -92,27 +92,59 @@ func _setup_lighting() -> void:
 	add_child(canvas_mod)
 
 func spawn_ruins() -> void:
-	var wall_sizes = [
-		Vector2(80, 20), Vector2(20, 80),
-		Vector2(48, 20), Vector2(20, 48),
-		Vector2(64, 20), Vector2(20, 64),
-	]
-	for i in RUIN_CLUSTER_COUNT:
+	var mid_textures: Array = WALL_TEXTURES.map(func(p): return load(p))
+	var end_tex = load(WALL_TEXTURE_END)
+	for _i in RUIN_CLUSTER_COUNT:
 		var angle = randf() * TAU
 		var dist = randf_range(200, 900)
-		var cluster_pos = Vector2.from_angle(angle) * dist
-		for j in randi_range(RUIN_MIN_PIECES, RUIN_MAX_PIECES):
-			var offset = Vector2(randf_range(-RUIN_SCATTER, RUIN_SCATTER), randf_range(-RUIN_SCATTER, RUIN_SCATTER))
-			var wall = StaticBody2D.new()
-			wall.set_script(WALL_SCRIPT)
-			wall.size = wall_sizes[randi() % wall_sizes.size()]
-			wall.rotation = randf_range(-WALL_ROTATION_RANGE, WALL_ROTATION_RANGE)
-			add_child(wall)
-			wall.global_position = cluster_pos + offset
-			var tex = load(WALL_TEXTURE)
-			if tex:
-				wall.texture = tex
-			_try_place_torch(wall)
+		var origin = Vector2.from_angle(angle) * dist
+		if randf() < 0.5:
+			_spawn_straight_wall(origin, mid_textures, end_tex)
+		else:
+			_spawn_l_wall(origin, mid_textures, end_tex)
+
+func _pick_tex(mid_textures: Array, end_tex, is_end: bool):
+	var r := randf()
+	if is_end and r < 0.12:
+		return end_tex   # wall3 — only on ends, ~12% chance
+	if r < 0.85:
+		return mid_textures[0]  # wall1 — dominant
+	return mid_textures[1]      # wall2 — occasional
+
+func _spawn_straight_wall(origin: Vector2, mid_textures: Array, end_tex) -> void:
+	var size := Vector2(WALL_UNIT, WALL_UNIT)
+	var step := Vector2(WALL_UNIT, 0) if randf() < 0.5 else Vector2(0, WALL_UNIT)
+	var count := randi_range(3, 6)
+	var start := origin - step * (count - 1) * 0.5
+	for i in count:
+		var is_end := (i == 0 or i == count - 1)
+		_place_wall(start + step * i, size, _pick_tex(mid_textures, end_tex, is_end))
+
+func _spawn_l_wall(origin: Vector2, mid_textures: Array, end_tex) -> void:
+	var size := Vector2(WALL_UNIT, WALL_UNIT)
+	var dir1 := Vector2(WALL_UNIT, 0) if randf() < 0.5 else Vector2(0, WALL_UNIT)
+	var perp_sign := 1 if randf() < 0.5 else -1
+	var dir2 := Vector2(0, WALL_UNIT * perp_sign) if dir1.x != 0 else Vector2(WALL_UNIT * perp_sign, 0)
+	var count1 := randi_range(3, 5)
+	var count2 := randi_range(2, 4)
+	for i in count1:
+		var is_end := (i == 0)
+		_place_wall(origin + dir1 * i, size, _pick_tex(mid_textures, end_tex, is_end))
+	var corner := origin + dir1 * (count1 - 1)
+	for j in range(1, count2 + 1):
+		var is_end := (j == count2)
+		_place_wall(corner + dir2 * j, size, _pick_tex(mid_textures, end_tex, is_end))
+
+func _place_wall(pos: Vector2, size: Vector2, tex) -> void:
+	var wall = StaticBody2D.new()
+	wall.set_script(WALL_SCRIPT)
+	wall.size = size
+	wall.rotation = 0.0
+	add_child(wall)
+	wall.global_position = pos
+	if tex:
+		wall.texture = tex
+	_try_place_torch(wall)
 
 
 func _try_place_torch(wall: StaticBody2D) -> void:

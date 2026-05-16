@@ -35,13 +35,13 @@ const TILT_AMOUNT = 0.13     # max lean angle in radians (~7.5 degrees)
 const WORLD_BOUNDS = Vector2(1576, 1440)  # half-extents of the background sprite
 
 const MagicWave = preload("res://scripts/characters/magic_wave.gd")
-const PlayerShadow = preload("res://scripts/characters/player_shadow.gd")
+const GroundShadow = preload("res://scripts/effects/ground_shadow.gd")
 const BloodParticles = preload("res://scripts/effects/blood_particles.gd")
 const LaserBeam = preload("res://scripts/effects/laser_beam.gd")
 
 const SHADOW_OFFSET_Y = 20.0   # pixels below the player centre where the shadow sits
-const SHADOW_BASE_ALPHA = 0.4  # opacity at rest
-const SHADOW_BOB_ALPHA = 0.55  # opacity at the lowest point of the bob
+const SHADOW_BASE_ALPHA = 0.15  # opacity at rest
+const SHADOW_BOB_ALPHA = 0.25   # opacity at the lowest point of the bob
 const SHAKE_INTENSITY = 7.0
 const SHAKE_STEPS = 6
 const SHAKE_DURATION = 0.35
@@ -93,8 +93,10 @@ func _ready() -> void:
 	$AnimatedSprite2D_Player.material = shader_mat
 
 	_shadow = Node2D.new()
-	_shadow.set_script(PlayerShadow)
+	_shadow.set_script(GroundShadow)
 	_shadow.position = Vector2(0, SHADOW_OFFSET_Y)
+	_shadow.scale = Vector2(1.1, 0.38)
+	_shadow.modulate = Color(0, 0, 0, SHADOW_BASE_ALPHA)
 	_shadow.z_index = -1
 	add_child(_shadow)
 
@@ -190,9 +192,9 @@ func _handle_movement(delta: float) -> void:
 	var target_tilt: float = input_direction.x * TILT_AMOUNT
 	$AnimatedSprite2D_Player.rotation = lerpf($AnimatedSprite2D_Player.rotation, target_tilt, delta * 12.0)
 
-	# shadow fades slightly lighter when the sprite is higher, heavier when it bobs down
-	var bob_t = ($AnimatedSprite2D_Player.position.y + IDLE_AMPLITUDE) / (BOB_AMPLITUDE + IDLE_AMPLITUDE)
-	_shadow.modulate.a = lerpf(SHADOW_BASE_ALPHA, SHADOW_BOB_ALPHA, clampf(bob_t, 0.0, 1.0))
+	var bob_t = clampf(($AnimatedSprite2D_Player.position.y + IDLE_AMPLITUDE) / (BOB_AMPLITUDE + IDLE_AMPLITUDE), 0.0, 1.0)
+	_shadow.scale.x = lerpf(0.9, 1.1, bob_t)
+	_shadow.modulate.a = lerpf(SHADOW_BASE_ALPHA, SHADOW_BOB_ALPHA, bob_t)
 
 func _handle_contact_damage(delta: float) -> void:
 	damage_cooldown -= delta

@@ -6,6 +6,7 @@ func _ready() -> void:
 	$Panel/VBox/BtnGiveCoins.pressed.connect(_on_give_coins)
 	$Panel/VBox/BtnGodMode.pressed.connect(_on_toggle_god_mode)
 	$Panel/VBox/BtnBossTokenChance.pressed.connect(_on_toggle_boss_token_chance)
+	$Panel/VBox/BtnResetStats.pressed.connect(_on_reset_stats)
 	$Panel/VBox/BtnClose.pressed.connect(_toggle)
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -31,6 +32,9 @@ func _on_toggle_god_mode() -> void:
 	state.dev_god_mode = not state.dev_god_mode
 	var label := "ON" if state.dev_god_mode else "OFF"
 	$Panel/VBox/BtnGodMode.text = "GOD MODE: " + label
+
+func _on_reset_stats() -> void:
+	get_node("/root/PlayerStats").reset()
 
 func _on_toggle_boss_token_chance() -> void:
 	var state := get_node("/root/GameState")

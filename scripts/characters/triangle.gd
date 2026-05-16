@@ -24,7 +24,7 @@ func _ready() -> void:
 	super._ready()
 
 func _physics_process(delta: float) -> void:
-	var player = get_tree().get_first_node_in_group("player")
+	var player := _player if is_instance_valid(_player) else null
 
 	# === RANGED ATTACK STATE: frozen for the animation duration ===
 	if _ranged_attack_timer > 0.0:

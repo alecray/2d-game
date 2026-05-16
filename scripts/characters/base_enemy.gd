@@ -18,11 +18,11 @@ const INVISIBLE_CHANCE = 0.05       # probability this enemy spawns nearly trans
 const INVISIBLE_ALPHA = 0.1         # opacity while invisible — just visible enough to hint at presence
 const RAGE_DURATION = 1.5           # seconds the enemy charges at boosted speed after taking a hit
 const RAGE_SPEED_MULTIPLIER = 2.0   # speed multiplier applied during rage
-const AMMO_DROP_CHANCE = 0.1        # roll below this → drop ammo on death
-const HEALTH_DROP_CHANCE = 0.2      # roll below this (but above ammo) → drop health on death
-const CRATE_DROP_CHANCE = 0.025       # independent 2.5% chance to also drop an upgrade crate
-const COIN_DROP_CHANCE = 0.15         # independent 15% chance to drop a coin
-const BOSS_TOKEN_DROP_CHANCE = 0.005  # independent 0.5% chance to drop a boss token
+const BOSS_TOKEN_DROP_CHANCE = 0.005  # checked first; rarest drop
+const CRATE_DROP_CHANCE = 0.025       # 2.5% base, scaled by difficulty
+const HEALTH_DROP_CHANCE = 0.1        # 10%
+const AMMO_DROP_CHANCE = 0.1          # 10%
+const COIN_DROP_CHANCE = 0.15         # 15% base, scaled by difficulty
 const CRATE_SCENE = preload("res://prefabs/items/crate.tscn")
 const COIN_SCENE = preload("res://prefabs/items/coin.tscn")
 const BOSS_TOKEN_SCENE = preload("res://prefabs/items/boss_token.tscn")
@@ -36,10 +36,6 @@ const HEALTH_BAR_HEIGHT = 4.0
 const HEALTH_BAR_OFFSET_Y = 26.0    # how far above the sprite centre the health bar sits
 const FloatingText = preload("res://scripts/utils/floating_text.gd")
 const EnemyDeathParticles = preload("res://scripts/effects/enemy_death_particles.gd")
-
-# what this enemy will drop when it dies — assigned randomly at spawn
-enum DropType { NONE, AMMO, HEALTH }
-var drop_type = DropType.NONE
 
 var health = 10
 var rage_timer = 0.0   # while > 0, enemy charges at boosted speed
@@ -55,6 +51,9 @@ var knockback_velocity = Vector2.ZERO
 var _attack_timer := 0.0
 var _attack_cooldown := 0.0
 var _flip_facing := false  # set true in subclass _ready() if sprite art faces left by default
+var _player: Node2D         # cached at spawn — avoids tree search every frame
+var _sep_offset: int = 0    # stagger so enemies don't all recalculate separation on the same frame
+var _cached_separation: Vector2 = Vector2.ZERO
 
 const KNOCKBACK_FRICTION = 14.0
 const ATTACK_DURATION = 0.7     # default seconds locked in melee animation (override via _get_attack_duration)
@@ -64,17 +63,12 @@ const PLAYER_AVOIDANCE_RADIUS = 24.0  # enemies won't try to occupy this space a
 const PLAYER_AVOIDANCE_FORCE = 150.0
 
 func _ready() -> void:
+	_player = get_tree().get_first_node_in_group("player")
+	_sep_offset = randi() % 5
 	current_speed = SPEED
 	health = max_health
 	collision_layer = 4  # enemy body on layer 3
 	collision_mask = 5   # collide with walls (layer 1) and other enemies (layer 3)
-
-	# randomly assign this enemy's loot drop at spawn
-	var roll = randf()
-	if roll < AMMO_DROP_CHANCE:
-		drop_type = DropType.AMMO
-	elif roll < HEALTH_DROP_CHANCE:
-		drop_type = DropType.HEALTH
 
 	# stagger wander timers so enemies don't all turn at the same moment
 	time_until_change = randf_range(0.5, CHANGE_DIRECTION_TIME)
@@ -104,7 +98,7 @@ func is_contact_damage_active() -> bool:
 	return _attack_timer > 0.0 and _attack_timer <= _get_attack_duration() * ATTACK_HIT_WINDOW_FRAC
 
 func _physics_process(delta: float) -> void:
-	var player = get_tree().get_first_node_in_group("player")
+	var player := _player if is_instance_valid(_player) else null
 	_attack_cooldown -= delta
 
 	# === ATTACK STATE: frozen for the duration of the melee animation ===
@@ -166,7 +160,7 @@ func _physics_process(delta: float) -> void:
 
 ## Returns a push vector that keeps this enemy from occupying the same space as the player.
 func _get_player_avoidance() -> Vector2:
-	var player = get_tree().get_first_node_in_group("player")
+	var player := _player if is_instance_valid(_player) else null
 	if not player:
 		return Vector2.ZERO
 	var offset = global_position - player.global_position
@@ -178,6 +172,8 @@ func _get_player_avoidance() -> Vector2:
 ## Returns a push vector that nudges this enemy away from any overlapping enemies.
 ## The force scales with how deeply they overlap — zero at the edge of the radius, max at full overlap.
 func _get_separation() -> Vector2:
+	if Engine.get_physics_frames() % 5 != _sep_offset:
+		return _cached_separation
 	var push = Vector2.ZERO
 	for body in get_tree().get_nodes_in_group("enemy"):
 		if body == self:
@@ -186,6 +182,7 @@ func _get_separation() -> Vector2:
 		var dist = offset.length()
 		if dist < SEPARATION_RADIUS and dist > 0:
 			push += offset.normalized() * (1.0 - dist / SEPARATION_RADIUS) * SEPARATION_FORCE
+	_cached_separation = push
 	return push
 
 func _pick_anim(default_anim: String) -> String:
@@ -296,15 +293,6 @@ func die() -> void:
 	get_parent().add_child(xp_label)
 	xp_label.global_position = global_position
 
-	if drop_type == DropType.AMMO:
-		var pickup = AMMO_PICKUP_SCENE.instantiate()
-		pickup.position = get_parent().to_local(global_position)
-		get_parent().call_deferred("add_child", pickup)
-	elif drop_type == DropType.HEALTH:
-		var pickup = HEALTH_PICKUP_SCENE.instantiate()
-		pickup.position = get_parent().to_local(global_position)
-		get_parent().call_deferred("add_child", pickup)
-
 	# color and particle count scale with enemy tier
 	var p_color = Color(1.0, 0.75, 0.05) if is_rare else (Color(0.1, 0.45, 1.0) if pack_id != -1 else get_death_color())
 	var p_amount = 80 if is_rare else (50 if pack_id != -1 else 28)
@@ -315,24 +303,50 @@ func die() -> void:
 	get_parent().add_child(particles)
 	particles.global_position = global_position
 
-	var _ps := get_node("/root/PlayerStats")
-	if randf() < CRATE_DROP_CHANCE * _ps.crate_chance_mult():
-		var crate = CRATE_SCENE.instantiate()
-		crate.position = get_parent().to_local(global_position)
-		get_parent().call_deferred("add_child", crate)
-
-	if randf() < COIN_DROP_CHANCE * _ps.coin_chance_mult():
-		var coin = COIN_SCENE.instantiate()
-		coin.position = get_parent().to_local(global_position)
-		get_parent().call_deferred("add_child", coin)
-
-	var token_chance := 1.0 if get_node("/root/GameState").dev_boss_token_force else BOSS_TOKEN_DROP_CHANCE
-	if randf() < token_chance:
-		var token = BOSS_TOKEN_SCENE.instantiate()
-		token.position = get_parent().to_local(global_position)
-		get_parent().call_deferred("add_child", token)
+	_drop_loot()
 
 	queue_free.call_deferred()
+
+func _drop_loot() -> void:
+	var _ps := get_node("/root/PlayerStats")
+	var pos: Vector2 = get_parent().to_local(global_position)
+
+	if get_node("/root/GameState").dev_boss_token_force:
+		var token = BOSS_TOKEN_SCENE.instantiate()
+		token.position = pos
+		get_parent().call_deferred("add_child", token)
+		return
+
+	var r := randf()
+	var accum := BOSS_TOKEN_DROP_CHANCE
+	if r < accum:
+		var token = BOSS_TOKEN_SCENE.instantiate()
+		token.position = pos
+		get_parent().call_deferred("add_child", token)
+		return
+	accum += CRATE_DROP_CHANCE * _ps.crate_chance_mult()
+	if r < accum:
+		var crate = CRATE_SCENE.instantiate()
+		crate.position = pos
+		get_parent().call_deferred("add_child", crate)
+		return
+	accum += HEALTH_DROP_CHANCE
+	if r < accum:
+		var pickup = HEALTH_PICKUP_SCENE.instantiate()
+		pickup.position = pos
+		get_parent().call_deferred("add_child", pickup)
+		return
+	accum += AMMO_DROP_CHANCE
+	if r < accum:
+		var pickup = AMMO_PICKUP_SCENE.instantiate()
+		pickup.position = pos
+		get_parent().call_deferred("add_child", pickup)
+		return
+	accum += COIN_DROP_CHANCE * _ps.coin_chance_mult()
+	if r < accum:
+		var coin = COIN_SCENE.instantiate()
+		coin.position = pos
+		get_parent().call_deferred("add_child", coin)
 
 func _spawn_popup(text: String, color: Color) -> void:
 	var label = FloatingText.new()

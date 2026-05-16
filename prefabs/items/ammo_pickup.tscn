@@ -2,47 +2,47 @@
 
 [ext_resource type="Script" uid="uid://chcg2yrhynfqu" path="res://scripts/effects/ammo_pickup.gd" id="1_ammo"]
 
-[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_jvpak"]
-_data = PackedByteArray("AAADAAUAAAABAAAAYAAAAEAAAAAqAQAAUklGRiIBAABXRUJQVlA4TBYBAAAvX8APEEegqI0k5H5Mrsi/mJOitpGkNvrpZ94AHXiURpLC/BMcDlqi/3aSmf8AAMGqIyFBbfce7I9u72aDq8h260YULgVREAVRCAVTCIXy9uPK1870N6L/jtw2ciRp0u5J3vAJk4inmwkzO0NiNHnH8sguKHx3gf2uYxhyVNYVmOTwLkp5R/hk8A49xZ3h769fPQodemo7YyFAO+RUd6M1H64NtENPYefELOvQw3fe1yHZabxjn+2OKWT1L6Md57Fd9RR26vmb4ulmQnpkF3roTsGF77wGQ47q4R1lYv7l8o6vEj4ZvONSwt9fv3oUXvCuM8RCFKBdHwGt+XBtFVjXdxitse66H/3bn8S2sTMYZu08211XYA==")
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_8gbbk"]
+_data = PackedByteArray("AAADAAUAAAABAAAAYAAAAEAAAABQAQAAUklGRkgBAABXRUJQVlA4TDsBAAAvX8APEFegJgAIxrdXC6ce+hfxiaImkiTlUr57it4Bv389L8RsABQVtjZe8v8lduP8BwAITu0NA2qVb2bv9bBhuX92LLiKbTduFAbVTBGIgiiIQDcKphAKphAKgZlYfvLW74j+M3DbSFG6Oob04BPUJexDRJ1B1gGtrWLyu2Jm3AoHcBZlKlqPV2FlttUwa6Lm5Yc5j8qIadnToe7BxKnswMAezkPFRbFHf4K9VY7znooGPLoT7K2VMEOP7kR7c05STDNDj/4Eejr2VEwz9OgP7jmfR4+ehD36g3vivwh6jIda059Az/78/8x7IP+umBlD76kwu8Ee00BsZfqDPcKof7DYY1VUXBR7TIrKcd5T0cAK9hqDVsIBoNcicE5STHME5LUOeyqmIYDX/PTfvCLUDI2B2IfG0+w1BQQA")
 size_override = Vector2(96, 64)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_d6ebh"]
-atlas = SubResource("PortableCompressedTexture2D_jvpak")
+[sub_resource type="AtlasTexture" id="AtlasTexture_w1vla"]
+atlas = SubResource("PortableCompressedTexture2D_8gbbk")
 region = Rect2(0, 0, 32, 32)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_duiw2"]
-atlas = SubResource("PortableCompressedTexture2D_jvpak")
+[sub_resource type="AtlasTexture" id="AtlasTexture_ibv0l"]
+atlas = SubResource("PortableCompressedTexture2D_8gbbk")
 region = Rect2(32, 0, 32, 32)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_tfita"]
-atlas = SubResource("PortableCompressedTexture2D_jvpak")
+[sub_resource type="AtlasTexture" id="AtlasTexture_v62l0"]
+atlas = SubResource("PortableCompressedTexture2D_8gbbk")
 region = Rect2(64, 0, 32, 32)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_utd5e"]
-atlas = SubResource("PortableCompressedTexture2D_jvpak")
+[sub_resource type="AtlasTexture" id="AtlasTexture_5us2q"]
+atlas = SubResource("PortableCompressedTexture2D_8gbbk")
 region = Rect2(0, 32, 32, 32)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_bltm4"]
-atlas = SubResource("PortableCompressedTexture2D_jvpak")
+[sub_resource type="AtlasTexture" id="AtlasTexture_37l3i"]
+atlas = SubResource("PortableCompressedTexture2D_8gbbk")
 region = Rect2(32, 32, 32, 32)
 
-[sub_resource type="SpriteFrames" id="SpriteFrames_qc08u"]
+[sub_resource type="SpriteFrames" id="SpriteFrames_vsss8"]
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_d6ebh")
+"texture": SubResource("AtlasTexture_w1vla")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_duiw2")
+"texture": SubResource("AtlasTexture_ibv0l")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_tfita")
+"texture": SubResource("AtlasTexture_v62l0")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_utd5e")
+"texture": SubResource("AtlasTexture_5us2q")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_bltm4")
+"texture": SubResource("AtlasTexture_37l3i")
 }],
 "loop": true,
 "name": &"default",
@@ -56,7 +56,7 @@ script = ExtResource("1_ammo")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1005]
 texture_filter = 1
-sprite_frames = SubResource("SpriteFrames_qc08u")
+sprite_frames = SubResource("SpriteFrames_vsss8")
 metadata/_aseprite_wizard_interface_config_ = {
 "pending_changes": {}
 }
@@ -73,7 +73,7 @@ metadata/_aseprite_wizard_config_ = {
 "source": "res://assets/sprites/items/ammo.aseprite",
 "source_uid": 4270155126569343242
 }
-metadata/_aseprite_wizard_source_file_hash_ = "30672a23289e6ee66d00b858a0693338"
+metadata/_aseprite_wizard_source_file_hash_ = "3872615e7cfabd95323867981f25e47a"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1006]
 shape = SubResource("CircleShape2D_ammo")
