@@ -5,6 +5,7 @@ var kills: int = 0
 var map_bg_color: Color = Color(0.53, 0.81, 0.92)
 var map_bg_texture: String = "res://assets/sprites/backgrounds/background-1.png"
 var map_world_color: Color = Color(0.85, 0.85, 0.65)
+var map_fog_color: Color = Color(0.07, 0.04, 0.10, 0.95)
 var map_grass_scene: String = "res://prefabs/environment/grass1.tscn"
 var map_leaf_palette: Array = [
 	Color(0.04, 0.18, 0.05),
@@ -21,12 +22,14 @@ var map_spawn_table: Array = [
 var boss_tokens: int = 0               # tokens collected this run; reaching 5 spawns the boss
 var dev_boss_token_force: bool = false  # set by dev menu; makes boss tokens drop 100% of the time
 var dev_god_mode: bool = false          # set by dev menu; player takes no damage
+var dev_spell_drop_force: bool = false  # set by dev menu; makes spell scrolls drop 100% of the time
 var map_boss_scene: String = "res://prefabs/enemies/boss_goblin.tscn"
 var map_boss_health_mult: float = 1.0
 var map_boss_damage_mult: float = 1.0
 var map_boss_unlocks: String = ""       # map name to unlock when this map's boss is defeated
 var boss_alive: bool = false
 var boss_triggered: bool = false        # true once boss has been spawned this run; never resets
+var just_unlocked_map: String = ""      # set on boss death; consumed by map_selection to animate the unlock
 
 func reset() -> void:
 	kills = 0

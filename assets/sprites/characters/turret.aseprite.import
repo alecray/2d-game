@@ -1,0 +1,14 @@
+[remap]
+
+importer="aseprite_wizard.plugin.noop"
+type="PackedDataContainer"
+uid="uid://dls2mxux23iqv"
+path="res://.godot/imported/turret.aseprite-b997c8412856e43073473d4c5346412b.res"
+
+[deps]
+
+source_file="res://assets/sprites/characters/turret.aseprite"
+dest_files=["res://.godot/imported/turret.aseprite-b997c8412856e43073473d4c5346412b.res"]
+
+[params]
+

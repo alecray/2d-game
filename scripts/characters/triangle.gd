@@ -21,10 +21,11 @@ func _ready() -> void:
 	max_health = 15
 	_strafe_sign = 1 if randf() < 0.5 else -1
 	fire_timer = randf_range(0.0, FIRE_RATE)  # stagger so a pack doesn't all fire at once
+	spell_drop_id = "lightning_bolt"
 	super._ready()
 
 func _physics_process(delta: float) -> void:
-	var player = get_tree().get_first_node_in_group("player")
+	var player := _player if is_instance_valid(_player) else null
 
 	# === RANGED ATTACK STATE: frozen for the animation duration ===
 	if _ranged_attack_timer > 0.0:

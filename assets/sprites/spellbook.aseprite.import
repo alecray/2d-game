@@ -1,0 +1,14 @@
+[remap]
+
+importer="aseprite_wizard.plugin.noop"
+type="PackedDataContainer"
+uid="uid://dcr7e0xmge8x6"
+path="res://.godot/imported/spellbook.aseprite-88ccc03acd726d5b04885068d8795f58.res"
+
+[deps]
+
+source_file="res://assets/sprites/spellbook.aseprite"
+dest_files=["res://.godot/imported/spellbook.aseprite-88ccc03acd726d5b04885068d8795f58.res"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="aseprite_wizard.plugin.noop"
+type="PackedDataContainer"
+uid="uid://cmhv1byp6ldas"
+path="res://.godot/imported/wall2.aseprite-7975b12f6ca09410914813c815269783.res"
+
+[deps]
+
+source_file="res://assets/sprites/environment/wall2.aseprite"
+dest_files=["res://.godot/imported/wall2.aseprite-7975b12f6ca09410914813c815269783.res"]
+
+[params]
+

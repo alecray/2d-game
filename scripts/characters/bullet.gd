@@ -24,6 +24,8 @@ var explosive = false       # Volatile: AOE damage on hit
 var homing = false          # Seeker: curve toward nearest enemy
 var bullet_color = Color.WHITE  # set by the player; gun types will override this
 var _hit_enemies: Dictionary = {}
+var _homing_target: Node = null
+var _homing_refresh: float = 0.0
 
 func _ready() -> void:
 	_spawn = global_position
@@ -35,9 +37,12 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	if homing:
-		var nearest = _nearest_enemy()
-		if nearest:
-			var to_target = (nearest.global_position - global_position).normalized()
+		_homing_refresh -= delta
+		if _homing_refresh <= 0.0 or not is_instance_valid(_homing_target):
+			_homing_target = _nearest_enemy()
+			_homing_refresh = 0.2
+		if _homing_target and is_instance_valid(_homing_target):
+			var to_target = (_homing_target.global_position - global_position).normalized()
 			direction = direction.lerp(to_target, HOMING_STRENGTH * delta).normalized()
 
 	var motion = direction * speed * delta
@@ -50,6 +55,9 @@ func _physics_process(delta: float) -> void:
 	var result = space.intersect_ray(query)
 
 	if result and result.collider is StaticBody2D:
+		_spawn_wall_hit_sparks(result.normal)
+		if result.collider.has_method("take_damage"):
+			result.collider.take_damage(damage, result.normal)
 		if bounces < max_bounces:
 			direction = direction.bounce(result.normal)
 			bounces += 1
@@ -95,6 +103,31 @@ func _explode() -> void:
 			if enemy.has_method("take_damage"):
 				enemy.take_damage(maxi(1, int(damage * 0.5)))
 			_hit_enemies[enemy] = true
+
+func _spawn_wall_hit_sparks(normal: Vector2) -> void:
+	var p := CPUParticles2D.new()
+	p.one_shot              = true
+	p.explosiveness         = 1.0
+	p.amount                = 5
+	p.lifetime              = 0.22
+	p.gravity               = Vector2.ZERO
+	p.direction             = normal
+	p.spread                = 50.0
+	p.initial_velocity_min  = 80.0
+	p.initial_velocity_max  = 220.0
+	p.scale_amount_min      = 1.0
+	p.scale_amount_max      = 2.5
+	var cgrad := Gradient.new()
+	cgrad.colors = PackedColorArray([Color(0.85, 0.80, 0.65), Color(0.50, 0.45, 0.38)])
+	p.color_initial_ramp = cgrad
+	var lgrad := Gradient.new()
+	lgrad.colors = PackedColorArray([Color(1, 1, 1, 1), Color(1, 1, 1, 0)])
+	p.color_ramp = lgrad
+	p.z_index = 5
+	get_parent().add_child(p)
+	p.global_position = global_position
+	p.emitting = true
+	p.finished.connect(p.queue_free)
 
 func _nearest_enemy() -> Node:
 	var nearest: Node = null

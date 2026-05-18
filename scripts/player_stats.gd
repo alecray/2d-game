@@ -45,12 +45,12 @@ const GUN_DEFS = {
 
 var xp: int = 0
 var coins: int = 0
-var boss_tokens: int = 0       # collected across runs; used to spawn the boss
-var unlocked_maps: Array = []  # map names unlocked by defeating bosses
-var owned_guns: Array = []  # purchased gun IDs; pistol is always available without being listed
+var boss_tokens: int = 0
+var unlocked_maps: Array = []
+var unlocked_spells: Array = ["magic_wave"]  # magic_wave is the starter spell, always known
+var owned_guns: Array = []
 var equipped_gun: String = "gun1"
 var levels: Dictionary = {}
-var difficulty: int = 1  # 1-100, persisted between runs
 
 func _ready() -> void:
 	for key in STAT_DEFS:
@@ -85,29 +85,6 @@ func equip_gun(id: String) -> void:
 		equipped_gun = id
 		_save()
 
-func set_difficulty(d: int) -> void:
-	difficulty = clampi(d, 1, 100)
-	_save()
-
-# --- difficulty scaling (logarithmic: t=0 at difficulty 1, t=1 at difficulty 100) ---
-
-func diff_scale() -> float:
-	if difficulty <= 1:
-		return 0.0
-	return log(float(difficulty)) / log(100.0)
-
-func enemy_stat_mult() -> float:
-	return lerp(1.0, 3.0, diff_scale())
-
-func coin_chance_mult() -> float:
-	return lerp(1.0, 4.0, diff_scale())
-
-func crate_chance_mult() -> float:
-	return lerp(1.0, 6.0, diff_scale())
-
-func bad_crate_chance() -> float:
-	return lerp(0.2, 1.0, diff_scale())
-
 # --- mutation ---
 
 func spend_xp(stat: String) -> void:
@@ -134,8 +111,20 @@ func unlock_map(map_name: String) -> void:
 		unlocked_maps.append(map_name)
 		_save()
 
+func has_spell(id: String) -> bool:
+	return id in unlocked_spells
+
+func unlock_spell(id: String) -> void:
+	if not has_spell(id):
+		unlocked_spells.append(id)
+		_save()
+
 func reset() -> void:
 	xp = 0
+	coins = 0
+	owned_guns = []
+	equipped_gun = "gun1"
+	unlocked_maps = []
 	for key in levels:
 		levels[key] = 0
 	_save()
@@ -165,9 +154,9 @@ func _save() -> void:
 	cfg.set_value("stats", "coins", coins)
 	cfg.set_value("stats", "boss_tokens", boss_tokens)
 	cfg.set_value("stats", "unlocked_maps", unlocked_maps)
+	cfg.set_value("stats", "unlocked_spells", unlocked_spells)
 	cfg.set_value("stats", "owned_guns", owned_guns)
 	cfg.set_value("stats", "equipped_gun", equipped_gun)
-	cfg.set_value("stats", "difficulty", difficulty)
 	for key in levels:
 		cfg.set_value("levels", key, levels[key])
 	cfg.save(SAVE_PATH)
@@ -180,8 +169,8 @@ func _load() -> void:
 	coins = cfg.get_value("stats", "coins", 0)
 	boss_tokens = cfg.get_value("stats", "boss_tokens", 0)
 	unlocked_maps = cfg.get_value("stats", "unlocked_maps", [])
+	unlocked_spells = cfg.get_value("stats", "unlocked_spells", ["magic_wave"])
 	owned_guns = cfg.get_value("stats", "owned_guns", [])
 	equipped_gun = cfg.get_value("stats", "equipped_gun", "gun1")
-	difficulty = cfg.get_value("stats", "difficulty", 1)
 	for key in levels:
 		levels[key] = cfg.get_value("levels", key, 0)

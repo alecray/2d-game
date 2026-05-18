@@ -32,6 +32,7 @@ var _charge_time: float = 0.0
 var _heat: float = 0.0
 var _overheated: bool = false
 var _hitting_wall: bool = false
+var _wall_collider: StaticBody2D = null
 
 var _glow: Line2D
 var _outer: Line2D
@@ -74,13 +75,13 @@ func _physics_process(delta: float) -> void:
 	_update_beam()
 	var heat_t := clampf(_heat / OVERHEAT_TIME, 0.0, 1.0)
 	_apply_visuals(heat_t)
-	_apply_knockback(delta)
 
 	_damage_accum += damage * lerpf(1.0, HEAT_DAMAGE_MULT, heat_t) * delta
+	var dmg := 0
 	if _damage_accum >= 1.0:
-		var dmg := int(_damage_accum)
+		dmg = int(_damage_accum)
 		_damage_accum -= float(dmg)
-		_apply_damage(dmg)
+	_apply_effects(delta, dmg)
 
 func _update_beam() -> void:
 	var from := global_position
@@ -92,8 +93,10 @@ func _update_beam() -> void:
 	_hitting_wall = not result.is_empty() and not result.collider.is_in_group("enemy")
 	if _hitting_wall:
 		_beam_end = result.position
+		_wall_collider = result.collider as StaticBody2D
 	else:
 		_beam_end = from + direction * MAX_RANGE
+		_wall_collider = null
 
 func _apply_visuals(heat_t: float) -> void:
 	var charge_t := clampf(_charge_time / CHARGE_DURATION, 0.0, 1.0)
@@ -131,7 +134,9 @@ func _apply_visuals(heat_t: float) -> void:
 	_outer.visible = true
 	_core.visible = true
 
-func _apply_damage(dmg: int) -> void:
+func _apply_effects(delta: float, dmg: int) -> void:
+	if dmg > 0 and is_instance_valid(_wall_collider) and _wall_collider.has_method("take_damage"):
+		_wall_collider.take_damage(dmg)
 	var from := global_position
 	var beam_length: float = from.distance_to(_beam_end)
 	for enemy in get_tree().get_nodes_in_group("enemy"):
@@ -140,18 +145,8 @@ func _apply_damage(dmg: int) -> void:
 		if along < 0.0 or along > beam_length:
 			continue
 		if absf(to_enemy.cross(direction)) <= ENEMY_HIT_RADIUS:
-			if enemy.has_method("take_damage"):
+			if dmg > 0 and enemy.has_method("take_damage"):
 				enemy.take_damage(dmg)
-
-func _apply_knockback(delta: float) -> void:
-	var from := global_position
-	var beam_length: float = from.distance_to(_beam_end)
-	for enemy in get_tree().get_nodes_in_group("enemy"):
-		var to_enemy: Vector2 = enemy.global_position - from
-		var along: float = to_enemy.dot(direction)
-		if along < 0.0 or along > beam_length:
-			continue
-		if absf(to_enemy.cross(direction)) <= ENEMY_HIT_RADIUS:
 			if enemy.has_method("apply_knockback"):
 				enemy.apply_knockback(direction * KNOCKBACK_STRENGTH * delta)
 

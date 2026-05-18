@@ -5,7 +5,10 @@ func _ready() -> void:
 	$Panel/VBox/BtnKillPlayer.pressed.connect(_on_kill_player)
 	$Panel/VBox/BtnGiveCoins.pressed.connect(_on_give_coins)
 	$Panel/VBox/BtnGodMode.pressed.connect(_on_toggle_god_mode)
-	$Panel/VBox/BtnBossTokenChance.pressed.connect(_on_toggle_boss_token_chance)
+	$Panel/VBox/BtnMovePedestal.pressed.connect(_on_move_pedestal)
+	$Panel/VBox/BtnNoClip.pressed.connect(_on_toggle_noclip)
+	$Panel/VBox/BtnResetStats.pressed.connect(_on_reset_stats)
+	$Panel/VBox/BtnSpellDrop.pressed.connect(_on_toggle_spell_drop)
 	$Panel/VBox/BtnClose.pressed.connect(_toggle)
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -32,8 +35,23 @@ func _on_toggle_god_mode() -> void:
 	var label := "ON" if state.dev_god_mode else "OFF"
 	$Panel/VBox/BtnGodMode.text = "GOD MODE: " + label
 
-func _on_toggle_boss_token_chance() -> void:
+func _on_reset_stats() -> void:
+	get_node("/root/PlayerStats").reset()
+
+func _on_move_pedestal() -> void:
+	var player := get_tree().get_first_node_in_group("player")
+	var pedestal := get_tree().get_first_node_in_group("pedestal")
+	if player and pedestal:
+		pedestal.global_position = player.global_position
+
+func _on_toggle_noclip() -> void:
+	var player := get_tree().get_first_node_in_group("player")
+	if not player:
+		return
+	player.noclip = not player.noclip
+	$Panel/VBox/BtnNoClip.text = "NOCLIP: " + ("ON" if player.noclip else "OFF")
+
+func _on_toggle_spell_drop() -> void:
 	var state := get_node("/root/GameState")
-	state.dev_boss_token_force = not state.dev_boss_token_force
-	var label := "100%" if state.dev_boss_token_force else "NORMAL"
-	$Panel/VBox/BtnBossTokenChance.text = "BOSS TOKEN CHANCE: " + label
+	state.dev_spell_drop_force = not state.dev_spell_drop_force
+	$Panel/VBox/BtnSpellDrop.text = "SPELL DROP 100%: " + ("ON" if state.dev_spell_drop_force else "OFF")

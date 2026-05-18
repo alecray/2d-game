@@ -1,6 +1,6 @@
 extends StaticBody2D
 
-var size = Vector2(80, 20)
+var size = Vector2(32, 32)
 var _poly: PackedVector2Array
 var _uvs: PackedVector2Array
 
@@ -48,10 +48,12 @@ func _build_rough_poly(s: Vector2) -> PackedVector2Array:
 	return pts
 
 ## Maps each polygon vertex to a UV coordinate so the texture tiles across the surface.
+## Vertices are centered at (0,0), so we offset by half the wall size to start UV at the top-left corner.
 func _build_uvs(poly: PackedVector2Array) -> PackedVector2Array:
 	var uvs = PackedVector2Array()
+	var half: Vector2 = size / 2.0
 	for point in poly:
-		uvs.append(point / TILE_SIZE)
+		uvs.append((point + half) / TILE_SIZE)
 	return uvs
 
 func _draw() -> void:

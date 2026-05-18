@@ -11,8 +11,8 @@ config_version=5
 [application]
 
 config/name="2d game"
-config/version="0.1.9"
-run/main_scene="uid://b1jv54q3e0gbd"
+config/version="0.1.12"
+run/main_scene="res://scenes/title_screen.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
 boot_splash/bg_color=Color(0.55634874, 0.44034684, 0.13231027, 1)
 boot_splash/image="uid://dsjbmtmy8ul5c"
@@ -25,8 +25,8 @@ PlayerStats="*res://scripts/player_stats.gd"
 
 [display]
 
-window/size/viewport_width=720
-window/size/viewport_height=480
+window/size/viewport_width=1280
+window/size/viewport_height=720
 window/stretch/mode="viewport"
 window/vsync/vsync_mode=0
 
@@ -41,7 +41,9 @@ enabled=PackedStringArray("res://addons/AsepriteWizard/plugin.cfg")
 [physics]
 
 3d/physics_engine="Jolt Physics"
+common/physics_in_separate_thread=true
 
 [rendering]
 
 rendering_device/driver.windows="d3d12"
+2d/snap/snap_2d_transforms_to_pixel=true

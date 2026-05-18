@@ -11,20 +11,19 @@ var DAMAGE = 10             # contact damage dealt to the player per hit
 var max_health = 10
 
 const CHANGE_DIRECTION_TIME = 2.0   # max seconds between random direction changes while wandering
-const DETECTION_RANGE = 200.0       # distance at which the enemy notices and starts chasing the player
+const DETECTION_RANGE = 300.0       # distance at which the enemy notices and starts chasing the player
 const SEPARATION_RADIUS = 28.0      # enemies within this distance push each other apart
 const SEPARATION_FORCE = 80.0       # strength of that push
 const INVISIBLE_CHANCE = 0.05       # probability this enemy spawns nearly transparent
 const INVISIBLE_ALPHA = 0.1         # opacity while invisible — just visible enough to hint at presence
 const RAGE_DURATION = 1.5           # seconds the enemy charges at boosted speed after taking a hit
 const RAGE_SPEED_MULTIPLIER = 2.0   # speed multiplier applied during rage
-const AMMO_DROP_CHANCE = 0.1        # roll below this → drop ammo on death
-const HEALTH_DROP_CHANCE = 0.2      # roll below this (but above ammo) → drop health on death
-const CRATE_DROP_CHANCE = 0.025       # independent 2.5% chance to also drop an upgrade crate
-const COIN_DROP_CHANCE = 0.15         # independent 15% chance to drop a coin
-const BOSS_TOKEN_DROP_CHANCE = 0.005  # independent 0.5% chance to drop a boss token
-const CRATE_SCENE = preload("res://prefabs/items/crate.tscn")
+const HEALTH_DROP_CHANCE = 0.1        # 10%
+const AMMO_DROP_CHANCE = 0.1          # 10%
+const COIN_DROP_CHANCE = 0.15         # 15% base, scaled by difficulty
 const COIN_SCENE = preload("res://prefabs/items/coin.tscn")
+const SPELL_SCROLL_SCENE = preload("res://prefabs/items/spell_scroll.tscn")
+const SPELL_DROP_CHANCE = 0.02  # 2% per kill, only while the spell is not yet known
 const BOSS_TOKEN_SCENE = preload("res://prefabs/items/boss_token.tscn")
 const HEALTH_PICKUP_SCENE = preload("res://prefabs/items/health_pickup.tscn")
 const AMMO_PICKUP_SCENE = preload("res://prefabs/items/ammo_pickup.tscn")
@@ -36,10 +35,7 @@ const HEALTH_BAR_HEIGHT = 4.0
 const HEALTH_BAR_OFFSET_Y = 26.0    # how far above the sprite centre the health bar sits
 const FloatingText = preload("res://scripts/utils/floating_text.gd")
 const EnemyDeathParticles = preload("res://scripts/effects/enemy_death_particles.gd")
-
-# what this enemy will drop when it dies — assigned randomly at spawn
-enum DropType { NONE, AMMO, HEALTH }
-var drop_type = DropType.NONE
+const GroundShadow = preload("res://scripts/effects/ground_shadow.gd")
 
 var health = 10
 var rage_timer = 0.0   # while > 0, enemy charges at boosted speed
@@ -55,6 +51,10 @@ var knockback_velocity = Vector2.ZERO
 var _attack_timer := 0.0
 var _attack_cooldown := 0.0
 var _flip_facing := false  # set true in subclass _ready() if sprite art faces left by default
+var _player: Node2D         # cached at spawn — avoids tree search every frame
+var _sep_offset: int = 0    # stagger so enemies don't all recalculate separation on the same frame
+var _cached_separation: Vector2 = Vector2.ZERO
+var spell_drop_id: String = ""  # spell scroll this enemy can drop; set in subclass _ready()
 
 const KNOCKBACK_FRICTION = 14.0
 const ATTACK_DURATION = 0.7     # default seconds locked in melee animation (override via _get_attack_duration)
@@ -64,17 +64,12 @@ const PLAYER_AVOIDANCE_RADIUS = 24.0  # enemies won't try to occupy this space a
 const PLAYER_AVOIDANCE_FORCE = 150.0
 
 func _ready() -> void:
+	_player = get_tree().get_first_node_in_group("player")
+	_sep_offset = randi() % 5
 	current_speed = SPEED
 	health = max_health
 	collision_layer = 4  # enemy body on layer 3
 	collision_mask = 5   # collide with walls (layer 1) and other enemies (layer 3)
-
-	# randomly assign this enemy's loot drop at spawn
-	var roll = randf()
-	if roll < AMMO_DROP_CHANCE:
-		drop_type = DropType.AMMO
-	elif roll < HEALTH_DROP_CHANCE:
-		drop_type = DropType.HEALTH
 
 	# stagger wander timers so enemies don't all turn at the same moment
 	time_until_change = randf_range(0.5, CHANGE_DIRECTION_TIME)
@@ -86,9 +81,20 @@ func _ready() -> void:
 		is_invisible = true
 		modulate.a = INVISIBLE_ALPHA
 
+	var shadow := Node2D.new()
+	shadow.set_script(GroundShadow)
+	shadow.position = Vector2(0.0, _get_shadow_offset_y())
+	shadow.scale = Vector2(1.0, 0.35)
+	shadow.modulate = Color(0.0, 0.0, 0.0, 0.18)
+	shadow.z_index = -1
+	add_child(shadow)
+
 	add_to_group("enemy")
 	if has_node("Area2D"):
 		$Area2D.add_to_group("enemy_hitbox")
+
+func _get_shadow_offset_y() -> float:
+	return 14.0
 
 func _get_melee_range() -> float:
 	return 0.0
@@ -104,7 +110,7 @@ func is_contact_damage_active() -> bool:
 	return _attack_timer > 0.0 and _attack_timer <= _get_attack_duration() * ATTACK_HIT_WINDOW_FRAC
 
 func _physics_process(delta: float) -> void:
-	var player = get_tree().get_first_node_in_group("player")
+	var player := _player if is_instance_valid(_player) else null
 	_attack_cooldown -= delta
 
 	# === ATTACK STATE: frozen for the duration of the melee animation ===
@@ -143,12 +149,7 @@ func _physics_process(delta: float) -> void:
 		var target_speed = CHASE_SPEED * (RAGE_SPEED_MULTIPLIER if rage_timer > 0 else 1.0)
 		current_speed = move_toward(current_speed, target_speed, ACCELERATION * delta)
 	else:
-		# wander randomly, picking a new direction every few seconds
-		time_until_change -= delta
-		if time_until_change <= 0:
-			pick_random_direction()
-			time_until_change = randf_range(0.5, CHANGE_DIRECTION_TIME)
-		current_speed = move_toward(current_speed, SPEED, ACCELERATION * delta)
+		current_speed = move_toward(current_speed, 0.0, ACCELERATION * delta)
 
 	rage_timer -= delta
 	if aura_color.a > 0.0:
@@ -166,7 +167,7 @@ func _physics_process(delta: float) -> void:
 
 ## Returns a push vector that keeps this enemy from occupying the same space as the player.
 func _get_player_avoidance() -> Vector2:
-	var player = get_tree().get_first_node_in_group("player")
+	var player := _player if is_instance_valid(_player) else null
 	if not player:
 		return Vector2.ZERO
 	var offset = global_position - player.global_position
@@ -178,6 +179,8 @@ func _get_player_avoidance() -> Vector2:
 ## Returns a push vector that nudges this enemy away from any overlapping enemies.
 ## The force scales with how deeply they overlap — zero at the edge of the radius, max at full overlap.
 func _get_separation() -> Vector2:
+	if Engine.get_physics_frames() % 5 != _sep_offset:
+		return _cached_separation
 	var push = Vector2.ZERO
 	for body in get_tree().get_nodes_in_group("enemy"):
 		if body == self:
@@ -186,6 +189,7 @@ func _get_separation() -> Vector2:
 		var dist = offset.length()
 		if dist < SEPARATION_RADIUS and dist > 0:
 			push += offset.normalized() * (1.0 - dist / SEPARATION_RADIUS) * SEPARATION_FORCE
+	_cached_separation = push
 	return push
 
 func _pick_anim(default_anim: String) -> String:
@@ -296,15 +300,6 @@ func die() -> void:
 	get_parent().add_child(xp_label)
 	xp_label.global_position = global_position
 
-	if drop_type == DropType.AMMO:
-		var pickup = AMMO_PICKUP_SCENE.instantiate()
-		pickup.position = get_parent().to_local(global_position)
-		get_parent().call_deferred("add_child", pickup)
-	elif drop_type == DropType.HEALTH:
-		var pickup = HEALTH_PICKUP_SCENE.instantiate()
-		pickup.position = get_parent().to_local(global_position)
-		get_parent().call_deferred("add_child", pickup)
-
 	# color and particle count scale with enemy tier
 	var p_color = Color(1.0, 0.75, 0.05) if is_rare else (Color(0.1, 0.45, 1.0) if pack_id != -1 else get_death_color())
 	var p_amount = 80 if is_rare else (50 if pack_id != -1 else 28)
@@ -315,24 +310,47 @@ func die() -> void:
 	get_parent().add_child(particles)
 	particles.global_position = global_position
 
-	var _ps := get_node("/root/PlayerStats")
-	if randf() < CRATE_DROP_CHANCE * _ps.crate_chance_mult():
-		var crate = CRATE_SCENE.instantiate()
-		crate.position = get_parent().to_local(global_position)
-		get_parent().call_deferred("add_child", crate)
-
-	if randf() < COIN_DROP_CHANCE * _ps.coin_chance_mult():
-		var coin = COIN_SCENE.instantiate()
-		coin.position = get_parent().to_local(global_position)
-		get_parent().call_deferred("add_child", coin)
-
-	var token_chance := 1.0 if get_node("/root/GameState").dev_boss_token_force else BOSS_TOKEN_DROP_CHANCE
-	if randf() < token_chance:
-		var token = BOSS_TOKEN_SCENE.instantiate()
-		token.position = get_parent().to_local(global_position)
-		get_parent().call_deferred("add_child", token)
+	_drop_loot()
 
 	queue_free.call_deferred()
+
+func _drop_loot() -> void:
+	var pos: Vector2 = get_parent().to_local(global_position)
+
+	if get_node("/root/GameState").dev_boss_token_force:
+		var token = BOSS_TOKEN_SCENE.instantiate()
+		token.position = pos
+		get_parent().call_deferred("add_child", token)
+		return
+
+	if not spell_drop_id.is_empty() \
+			and not get_node("/root/PlayerStats").has_spell(spell_drop_id) \
+			and (get_node("/root/GameState").dev_spell_drop_force or randf() < SPELL_DROP_CHANCE):
+		var scroll = SPELL_SCROLL_SCENE.instantiate()
+		scroll.spell_id = spell_drop_id
+		scroll.position = pos
+		get_parent().call_deferred("add_child", scroll)
+		return
+
+	var r := randf()
+	var accum := 0.0
+	accum += HEALTH_DROP_CHANCE
+	if r < accum:
+		var pickup = HEALTH_PICKUP_SCENE.instantiate()
+		pickup.position = pos
+		get_parent().call_deferred("add_child", pickup)
+		return
+	accum += AMMO_DROP_CHANCE
+	if r < accum:
+		var pickup = AMMO_PICKUP_SCENE.instantiate()
+		pickup.position = pos
+		get_parent().call_deferred("add_child", pickup)
+		return
+	accum += COIN_DROP_CHANCE
+	if r < accum:
+		var coin = COIN_SCENE.instantiate()
+		coin.position = pos
+		get_parent().call_deferred("add_child", coin)
 
 func _spawn_popup(text: String, color: Color) -> void:
 	var label = FloatingText.new()

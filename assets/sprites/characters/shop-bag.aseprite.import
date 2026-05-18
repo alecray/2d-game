@@ -1,0 +1,14 @@
+[remap]
+
+importer="aseprite_wizard.plugin.noop"
+type="PackedDataContainer"
+uid="uid://c1k5lgyjhgevg"
+path="res://.godot/imported/shop-bag.aseprite-620243f2e0bf4469c810f595ecc0fab5.res"
+
+[deps]
+
+source_file="res://assets/sprites/characters/shop-bag.aseprite"
+dest_files=["res://.godot/imported/shop-bag.aseprite-620243f2e0bf4469c810f595ecc0fab5.res"]
+
+[params]
+
