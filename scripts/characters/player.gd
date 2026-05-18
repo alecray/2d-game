@@ -35,6 +35,8 @@ const TILT_AMOUNT = 0.13     # max lean angle in radians (~7.5 degrees)
 const WORLD_BOUNDS = Vector2(1576, 1440)  # half-extents of the background sprite
 
 const MagicWave = preload("res://scripts/characters/magic_wave.gd")
+
+var active_spell: String = "magic_wave"
 const GroundShadow = preload("res://scripts/effects/ground_shadow.gd")
 const BloodParticles = preload("res://scripts/effects/blood_particles.gd")
 const LaserBeam = preload("res://scripts/effects/laser_beam.gd")
@@ -81,6 +83,18 @@ var idle_time = 0.0
 var _shadow: Node2D
 @onready var _gun: Sprite2D = $Gun
 
+var noclip := false:
+	set(value):
+		noclip = value
+		if value:
+			collision_layer = 0
+			collision_mask  = 0
+			$HurtBox.collision_mask = 0
+		else:
+			collision_layer = 2
+			collision_mask  = 1
+			$HurtBox.collision_mask = 4
+
 func _ready() -> void:
 	add_to_group("player")
 	$HurtBox.add_to_group("player_hitbox")
@@ -99,13 +113,6 @@ func _ready() -> void:
 	_shadow.modulate = Color(0, 0, 0, SHADOW_BASE_ALPHA)
 	_shadow.z_index = -1
 	add_child(_shadow)
-
-	var player_light = PointLight2D.new()
-	player_light.color = Color(1.0, 0.92, 0.82)
-	player_light.energy = 0.35
-	player_light.texture = _make_light_texture()
-	player_light.texture_scale = 200.0 / (0.1 * 256.0)
-	add_child(player_light)
 
 	# apply persistent upgrades from PlayerStats
 	var stats = get_node("/root/PlayerStats")
@@ -161,11 +168,13 @@ func _handle_movement(delta: float) -> void:
 	if Input.is_key_pressed(KEY_D):
 		input_direction.x += 1
 
-	velocity = input_direction.normalized() * SPEED if input_direction != Vector2.ZERO else Vector2.ZERO
-	# add knockback on top of normal movement, then let it fade out smoothly
-	velocity += knockback_velocity
-	knockback_velocity = knockback_velocity.lerp(Vector2.ZERO, delta * 10)
-	move_and_slide()
+	if noclip:
+		global_position += input_direction.normalized() * SPEED * 3.0 * delta
+	else:
+		velocity = input_direction.normalized() * SPEED if input_direction != Vector2.ZERO else Vector2.ZERO
+		velocity += knockback_velocity
+		knockback_velocity = knockback_velocity.lerp(Vector2.ZERO, delta * 10)
+		move_and_slide()
 	global_position.x = clampf(global_position.x, -WORLD_BOUNDS.x + MAP_BOUNDS_BUFFER, WORLD_BOUNDS.x - MAP_BOUNDS_BUFFER)
 	global_position.y = clampf(global_position.y, -WORLD_BOUNDS.y, WORLD_BOUNDS.y)
 
@@ -245,12 +254,18 @@ func _stop_laser() -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
-		if mana >= MAGIC_COST:
+		_cast_spell()
+
+func _cast_spell() -> void:
+	if mana < MAGIC_COST:
+		return
+	match active_spell:
+		"magic_wave":
 			var wave = MagicWave.new()
 			add_sibling(wave)
 			wave.global_position = global_position
-			mana -= MAGIC_COST
-			magic_used.emit(MAGIC_COST)
+	mana -= MAGIC_COST
+	magic_used.emit(MAGIC_COST)
 
 func take_damage(amount: int) -> void:
 	if get_node("/root/GameState").dev_god_mode:
@@ -314,18 +329,6 @@ func _on_death_animation_finished() -> void:
 	fade_out.tween_property(rect, "color:a", 0.0, 0.4)
 	fade_out.tween_callback(layer.queue_free)
 
-func _make_light_texture() -> GradientTexture2D:
-	var grad = Gradient.new()
-	grad.colors = PackedColorArray([Color(1.0, 1.0, 1.0, 1.0), Color(0.0, 0.0, 0.0, 0.0)])
-	grad.offsets = PackedFloat32Array([0.0, 1.0])
-	var tex = GradientTexture2D.new()
-	tex.gradient = grad
-	tex.fill = GradientTexture2D.FILL_RADIAL
-	tex.fill_from = Vector2(0.5, 0.5)
-	tex.fill_to = Vector2(0.6, 0.5)
-	tex.width = 256
-	tex.height = 256
-	return tex
 
 func _shake_camera() -> void:
 	var vp := get_viewport()
@@ -382,11 +385,18 @@ func shoot_bullet() -> void:
 			split.append(a + BULLET_SPLIT_ANGLE)
 		spread_angles = split
 
+	var space := get_world_2d().direct_space_state
+
 	for spread in spread_angles:
 		var fire_dir = aim_direction.rotated(spread)
 		var bullet = BULLET_SCENE.instantiate()
 		bullet.direction = fire_dir
-		bullet.global_position = _gun.global_transform * GUN_TIP_LOCAL
+		var gun_tip := _gun.global_transform * GUN_TIP_LOCAL
+		var wall_query := PhysicsRayQueryParameters2D.create(global_position, gun_tip)
+		wall_query.exclude = [get_rid()]
+		wall_query.collide_with_areas = false
+		var wall_hit := space.intersect_ray(wall_query)
+		bullet.global_position = wall_hit.position - fire_dir * 2.0 if wall_hit and wall_hit.collider is StaticBody2D else gun_tip
 		bullet.damage = bullet_damage
 		bullet.speed = bullet.SPEED * bullet_speed_multiplier
 		var combined: Vector2 = fire_dir * bullet.speed + velocity

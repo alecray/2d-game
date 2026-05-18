@@ -6,6 +6,7 @@ func _ready() -> void:
 	CHASE_SPEED = 73.0
 	DAMAGE = 30
 	_flip_facing = true
+	spell_drop_id = "poison_cloud"
 	super._ready()
 
 func get_death_color() -> Color:

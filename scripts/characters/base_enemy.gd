@@ -11,20 +11,19 @@ var DAMAGE = 10             # contact damage dealt to the player per hit
 var max_health = 10
 
 const CHANGE_DIRECTION_TIME = 2.0   # max seconds between random direction changes while wandering
-const DETECTION_RANGE = 200.0       # distance at which the enemy notices and starts chasing the player
+const DETECTION_RANGE = 300.0       # distance at which the enemy notices and starts chasing the player
 const SEPARATION_RADIUS = 28.0      # enemies within this distance push each other apart
 const SEPARATION_FORCE = 80.0       # strength of that push
 const INVISIBLE_CHANCE = 0.05       # probability this enemy spawns nearly transparent
 const INVISIBLE_ALPHA = 0.1         # opacity while invisible — just visible enough to hint at presence
 const RAGE_DURATION = 1.5           # seconds the enemy charges at boosted speed after taking a hit
 const RAGE_SPEED_MULTIPLIER = 2.0   # speed multiplier applied during rage
-const BOSS_TOKEN_DROP_CHANCE = 0.005  # checked first; rarest drop
-const CRATE_DROP_CHANCE = 0.025       # 2.5% base, scaled by difficulty
 const HEALTH_DROP_CHANCE = 0.1        # 10%
 const AMMO_DROP_CHANCE = 0.1          # 10%
 const COIN_DROP_CHANCE = 0.15         # 15% base, scaled by difficulty
-const CRATE_SCENE = preload("res://prefabs/items/crate.tscn")
 const COIN_SCENE = preload("res://prefabs/items/coin.tscn")
+const SPELL_SCROLL_SCENE = preload("res://prefabs/items/spell_scroll.tscn")
+const SPELL_DROP_CHANCE = 0.02  # 2% per kill, only while the spell is not yet known
 const BOSS_TOKEN_SCENE = preload("res://prefabs/items/boss_token.tscn")
 const HEALTH_PICKUP_SCENE = preload("res://prefabs/items/health_pickup.tscn")
 const AMMO_PICKUP_SCENE = preload("res://prefabs/items/ammo_pickup.tscn")
@@ -36,6 +35,7 @@ const HEALTH_BAR_HEIGHT = 4.0
 const HEALTH_BAR_OFFSET_Y = 26.0    # how far above the sprite centre the health bar sits
 const FloatingText = preload("res://scripts/utils/floating_text.gd")
 const EnemyDeathParticles = preload("res://scripts/effects/enemy_death_particles.gd")
+const GroundShadow = preload("res://scripts/effects/ground_shadow.gd")
 
 var health = 10
 var rage_timer = 0.0   # while > 0, enemy charges at boosted speed
@@ -54,6 +54,7 @@ var _flip_facing := false  # set true in subclass _ready() if sprite art faces l
 var _player: Node2D         # cached at spawn — avoids tree search every frame
 var _sep_offset: int = 0    # stagger so enemies don't all recalculate separation on the same frame
 var _cached_separation: Vector2 = Vector2.ZERO
+var spell_drop_id: String = ""  # spell scroll this enemy can drop; set in subclass _ready()
 
 const KNOCKBACK_FRICTION = 14.0
 const ATTACK_DURATION = 0.7     # default seconds locked in melee animation (override via _get_attack_duration)
@@ -80,9 +81,20 @@ func _ready() -> void:
 		is_invisible = true
 		modulate.a = INVISIBLE_ALPHA
 
+	var shadow := Node2D.new()
+	shadow.set_script(GroundShadow)
+	shadow.position = Vector2(0.0, _get_shadow_offset_y())
+	shadow.scale = Vector2(1.0, 0.35)
+	shadow.modulate = Color(0.0, 0.0, 0.0, 0.18)
+	shadow.z_index = -1
+	add_child(shadow)
+
 	add_to_group("enemy")
 	if has_node("Area2D"):
 		$Area2D.add_to_group("enemy_hitbox")
+
+func _get_shadow_offset_y() -> float:
+	return 14.0
 
 func _get_melee_range() -> float:
 	return 0.0
@@ -137,12 +149,7 @@ func _physics_process(delta: float) -> void:
 		var target_speed = CHASE_SPEED * (RAGE_SPEED_MULTIPLIER if rage_timer > 0 else 1.0)
 		current_speed = move_toward(current_speed, target_speed, ACCELERATION * delta)
 	else:
-		# wander randomly, picking a new direction every few seconds
-		time_until_change -= delta
-		if time_until_change <= 0:
-			pick_random_direction()
-			time_until_change = randf_range(0.5, CHANGE_DIRECTION_TIME)
-		current_speed = move_toward(current_speed, SPEED, ACCELERATION * delta)
+		current_speed = move_toward(current_speed, 0.0, ACCELERATION * delta)
 
 	rage_timer -= delta
 	if aura_color.a > 0.0:
@@ -316,19 +323,17 @@ func _drop_loot() -> void:
 		get_parent().call_deferred("add_child", token)
 		return
 
+	if not spell_drop_id.is_empty() \
+			and not get_node("/root/PlayerStats").has_spell(spell_drop_id) \
+			and (get_node("/root/GameState").dev_spell_drop_force or randf() < SPELL_DROP_CHANCE):
+		var scroll = SPELL_SCROLL_SCENE.instantiate()
+		scroll.spell_id = spell_drop_id
+		scroll.position = pos
+		get_parent().call_deferred("add_child", scroll)
+		return
+
 	var r := randf()
-	var accum := BOSS_TOKEN_DROP_CHANCE
-	if r < accum:
-		var token = BOSS_TOKEN_SCENE.instantiate()
-		token.position = pos
-		get_parent().call_deferred("add_child", token)
-		return
-	accum += CRATE_DROP_CHANCE
-	if r < accum:
-		var crate = CRATE_SCENE.instantiate()
-		crate.position = pos
-		get_parent().call_deferred("add_child", crate)
-		return
+	var accum := 0.0
 	accum += HEALTH_DROP_CHANCE
 	if r < accum:
 		var pickup = HEALTH_PICKUP_SCENE.instantiate()

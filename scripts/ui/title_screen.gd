@@ -1,205 +1,247 @@
 extends Node2D
 
-const FONT          := preload("res://assets/fonts/PressStart2P-Regular.ttf")
-const BG_TEXTURE    := preload("res://assets/sprites/backgrounds/background-1.png")
-const LOGO_TEXTURE  := preload("res://assets/sprites/alec-ray-logo.png")
-const SpiderScene   := preload("res://prefabs/enemies/spider.tscn")
-const BlobScene     := preload("res://prefabs/enemies/blob.tscn")
-const WaterShader   := preload("res://assets/shaders/water_text.gdshader")
+const FONT        := preload("res://assets/fonts/PressStart2P-Regular.ttf")
+const GUN_TEXTURE := preload("res://assets/sprites/weapons/gun5.png")
 
-const SCREEN_W    := 1280.0
-const SCREEN_H    := 720.0
-const GROUND_Y    := 545.0
-const CRITTER_SPEED := 38.0
+const SCREEN_W := 1280.0
+const SCREEN_H := 720.0
 
-var _critters: Array = []
+# Gun display constants
+const GUN_TARGET_W   := 720.0
+const GUN_CENTER_X   := 870.0
+const GUN_CENTER_Y   := 360.0
+const GUN_ROTATION   := -32.0
+
+# Menu
+const MENU_LABELS := ["PLAY", "QUIT"]
+const MENU_START_Y := 250.0
+const MENU_ITEM_H  := 68.0
+
+var _selected   := -1
 var _navigating := false
+var _btns: Array = []
 
 func _ready() -> void:
-	RenderingServer.set_default_clear_color(Color(0.53, 0.81, 0.92))
-	_build_world()
-	_spawn_critters()
-	_build_logo_watermark()
+	RenderingServer.set_default_clear_color(Color.BLACK)
+	_build_atmosphere()
+	_build_gun()
 	_build_ui()
 	_fade_in()
 
-func _process(delta: float) -> void:
-	for c in _critters:
-		var node := c["node"] as Node2D
-		node.position.x += c["dir"] * CRITTER_SPEED * c["speed"] * delta
-		if node.position.x > SCREEN_W + 80.0:
-			node.position.x = -80.0
-		elif node.position.x < -80.0:
-			node.position.x = SCREEN_W + 80.0
-
 func _unhandled_input(event: InputEvent) -> void:
+	if _navigating:
+		return
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE]:
-			_go_to_map_select()
+		match event.keycode:
+			KEY_UP, KEY_W:
+				_move_selection(-1)
+				get_viewport().set_input_as_handled()
+			KEY_DOWN, KEY_S:
+				_move_selection(1)
+				get_viewport().set_input_as_handled()
+			KEY_ENTER, KEY_KP_ENTER, KEY_SPACE:
+				_confirm()
+				get_viewport().set_input_as_handled()
 
-# ── World ────────────────────────────────────────────────────────────────────
+func _move_selection(dir: int) -> void:
+	if _selected < 0:
+		_selected = 0 if dir > 0 else MENU_LABELS.size() - 1
+	else:
+		_selected = (_selected + dir + MENU_LABELS.size()) % MENU_LABELS.size()
+	_refresh_buttons()
 
-func _build_world() -> void:
-	var tex_size := BG_TEXTURE.get_size()
-	var ground := Sprite2D.new()
-	ground.texture = BG_TEXTURE
-	ground.position = Vector2(SCREEN_W * 0.5, GROUND_Y + 95.0)
-	ground.scale = Vector2(SCREEN_W / tex_size.x, 210.0 / tex_size.y)
-	add_child(ground)
+func _refresh_buttons() -> void:
+	for i in _btns.size():
+		_style_btn(_btns[i], i == _selected)
 
-	# Horizon shadow strip
-	var shadow := ColorRect.new()
-	shadow.color = Color(0.0, 0.0, 0.0, 0.20)
-	shadow.size = Vector2(SCREEN_W, 6.0)
-	shadow.position = Vector2(0.0, GROUND_Y - 3.0)
-	add_child(shadow)
+func _confirm() -> void:
+	var idx := maxi(_selected, 0)
+	_animate_click(_btns[idx], idx)
 
-func _spawn_critters() -> void:
-	var xs: Array = []
-	for i in 6:
-		xs.append(randf_range(60.0, SCREEN_W - 60.0))
-	xs.sort()
-	var scenes := [SpiderScene, BlobScene, SpiderScene, BlobScene, SpiderScene, BlobScene]
-	for i in 6:
-		var critter: Node2D = scenes[i].instantiate()
-		critter.set_physics_process(false)
-		critter.set_process(false)
-		critter.position = Vector2(xs[i], GROUND_Y + randf_range(4.0, 50.0))
-		critter.scale = Vector2(3.0, 3.0)
-		add_child(critter)
-		var sprite := critter.get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
-		var dir := 1.0 if randf() < 0.5 else -1.0
-		if sprite:
-			sprite.play("Walk")
-			sprite.flip_h = dir < 0
-		_critters.append({"node": critter, "dir": dir, "speed": randf_range(0.65, 1.35)})
+# ── Atmosphere ────────────────────────────────────────────────────────────────
 
-# ── Logo watermark (sits between world and UI) ───────────────────────────────
-
-func _build_logo_watermark() -> void:
+func _build_atmosphere() -> void:
 	var layer := CanvasLayer.new()
-	layer.layer = 5
+	layer.layer = 1
 	add_child(layer)
-	var logo := TextureRect.new()
-	logo.texture = LOGO_TEXTURE
-	var logo_size := LOGO_TEXTURE.get_size()
-	logo.position = Vector2(
-		(SCREEN_W - logo_size.x) * 0.5,
-		(SCREEN_H - logo_size.y) * 0.5 - 20.0
-	)
-	# Tint toward sky-blue so the white bg blends in; dark outlines become faint shadows
-	logo.modulate = Color(0.55, 0.76, 0.90, 0.14)
-	layer.add_child(logo)
 
-# ── UI ───────────────────────────────────────────────────────────────────────
+	# Wide diffuse cone
+	var cone := Polygon2D.new()
+	cone.polygon = PackedVector2Array([
+		Vector2(GUN_CENTER_X - 90, -10),
+		Vector2(GUN_CENTER_X + 90, -10),
+		Vector2(GUN_CENTER_X + 420, SCREEN_H + 10),
+		Vector2(GUN_CENTER_X - 420, SCREEN_H + 10),
+	])
+	cone.color = Color(1.0, 1.0, 1.0, 0.032)
+	layer.add_child(cone)
+
+	# Tight bright core
+	var core := Polygon2D.new()
+	core.polygon = PackedVector2Array([
+		Vector2(GUN_CENTER_X - 30, -10),
+		Vector2(GUN_CENTER_X + 30, -10),
+		Vector2(GUN_CENTER_X + 120, SCREEN_H + 10),
+		Vector2(GUN_CENTER_X - 120, SCREEN_H + 10),
+	])
+	core.color = Color(1.0, 1.0, 1.0, 0.028)
+	layer.add_child(core)
+
+# ── Gun ───────────────────────────────────────────────────────────────────────
+
+func _build_gun() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 2
+	add_child(layer)
+
+	# Diffuse glow halo behind gun
+	var halo := ColorRect.new()
+	halo.color = Color(0.18, 0.38, 1.0, 0.09)
+	halo.size = Vector2(660, 420)
+	halo.position = Vector2(GUN_CENTER_X - 330, GUN_CENTER_Y - 210)
+	layer.add_child(halo)
+
+	# Gun sprite — scaled up with nearest-neighbour for crisp pixels
+	var sf := GUN_TARGET_W / GUN_TEXTURE.get_size().x
+	var gun := Sprite2D.new()
+	gun.texture = GUN_TEXTURE
+	gun.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	gun.scale = Vector2(sf, sf)
+	gun.rotation_degrees = GUN_ROTATION
+	gun.position = Vector2(GUN_CENTER_X, GUN_CENTER_Y)
+	gun.modulate = Color(0.90, 0.94, 1.0)
+	layer.add_child(gun)
+
+	# Floor glow — subtle surface reflection
+	var floor_glow := ColorRect.new()
+	floor_glow.color = Color(0.12, 0.25, 0.70, 0.14)
+	floor_glow.size = Vector2(720, 90)
+	floor_glow.position = Vector2(GUN_CENTER_X - 360, GUN_CENTER_Y + 210)
+	layer.add_child(floor_glow)
+
+# ── UI ────────────────────────────────────────────────────────────────────────
 
 func _build_ui() -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 10
 	add_child(layer)
 	_add_title(layer)
-	_add_subtitle(layer)
-	_add_play_button(layer)
-	_add_hint(layer)
+	_add_menu(layer)
 	_add_credit(layer)
 
 func _add_title(parent: Node) -> void:
 	var lbl := Label.new()
 	lbl.text = ProjectSettings.get_setting("application/config/name", "2D GAME").to_upper()
 	lbl.add_theme_font_override("font", FONT)
-	lbl.add_theme_font_size_override("font_size", 52)
+	lbl.add_theme_font_size_override("font_size", 24)
 	lbl.add_theme_color_override("font_color", Color.WHITE)
-	lbl.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.50))
-	lbl.add_theme_constant_override("shadow_offset_x", 4)
+	lbl.add_theme_color_override("font_shadow_color", Color(0.25, 0.50, 1.0, 0.65))
+	lbl.add_theme_constant_override("shadow_offset_x", 0)
 	lbl.add_theme_constant_override("shadow_offset_y", 4)
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.position = Vector2(0.0, 155.0)
-	lbl.size = Vector2(SCREEN_W, 80.0)
-	var mat := ShaderMaterial.new()
-	mat.shader = WaterShader
-	mat.set_shader_parameter("wave_amount", 0.13)
-	lbl.material = mat
+	lbl.position = Vector2(60.0, 90.0)
 	parent.add_child(lbl)
 
-	# Gentle vertical bob
-	var tween := lbl.create_tween().set_loops()
-	tween.tween_property(lbl, "position:y", 148.0, 1.6).set_trans(Tween.TRANS_SINE)
-	tween.tween_property(lbl, "position:y", 155.0, 1.6).set_trans(Tween.TRANS_SINE)
+	var sub := Label.new()
+	sub.text = "a top-down survivor"
+	sub.add_theme_font_override("font", FONT)
+	sub.add_theme_font_size_override("font_size", 8)
+	sub.add_theme_color_override("font_color", Color(0.55, 0.65, 0.85, 0.60))
+	sub.position = Vector2(62.0, 130.0)
+	parent.add_child(sub)
 
-func _add_subtitle(parent: Node) -> void:
-	var lbl := Label.new()
-	lbl.text = "a top-down survivor"
-	lbl.add_theme_font_override("font", FONT)
-	lbl.add_theme_font_size_override("font_size", 10)
-	lbl.add_theme_color_override("font_color", Color(0.88, 0.94, 1.0, 0.72))
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.position = Vector2(0.0, 256.0)
-	lbl.size = Vector2(SCREEN_W, 24.0)
-	parent.add_child(lbl)
+func _add_menu(parent: Node) -> void:
+	for i in MENU_LABELS.size():
+		var btn := _make_btn(MENU_LABELS[i], i)
+		btn.position = Vector2(0.0, MENU_START_Y + i * MENU_ITEM_H)
+		parent.add_child(btn)
+		_btns.append(btn)
+	_refresh_buttons()
 
-func _add_play_button(parent: Node) -> void:
-	var btn_w := 280.0
-	var btn_h := 64.0
-
-	var sn := StyleBoxFlat.new()
-	sn.bg_color = Color(0.07, 0.07, 0.13, 0.88)
-	sn.set_border_width_all(2)
-	sn.border_color = Color(1.0, 0.85, 0.15, 0.60)
-	sn.set_content_margin_all(10.0)
-
-	var sh := StyleBoxFlat.new()
-	sh.bg_color = Color(0.13, 0.13, 0.22, 0.95)
-	sh.set_border_width_all(3)
-	sh.border_color = Color(1.0, 0.90, 0.25, 1.0)
-	sh.set_content_margin_all(10.0)
-
-	var sp := StyleBoxFlat.new()
-	sp.bg_color = Color(0.04, 0.04, 0.09, 0.95)
-	sp.set_border_width_all(2)
-	sp.border_color = Color(1.0, 0.85, 0.15, 0.35)
-	sp.set_content_margin_all(10.0)
-
+func _make_btn(label_text: String, idx: int) -> Button:
 	var btn := Button.new()
-	btn.text = "PLAY"
+	btn.text = label_text
 	btn.add_theme_font_override("font", FONT)
-	btn.add_theme_font_size_override("font_size", 28)
-	btn.add_theme_color_override("font_color",         Color(1.00, 0.85, 0.10))
-	btn.add_theme_color_override("font_hover_color",   Color(1.00, 1.00, 0.35))
-	btn.add_theme_color_override("font_pressed_color", Color(0.85, 0.68, 0.05))
-	btn.add_theme_color_override("font_focus_color",   Color(1.00, 0.85, 0.10))
-	btn.add_theme_stylebox_override("normal",  sn)
-	btn.add_theme_stylebox_override("hover",   sh)
-	btn.add_theme_stylebox_override("pressed", sp)
-	btn.add_theme_stylebox_override("focus",   sn)
-	btn.custom_minimum_size = Vector2(btn_w, btn_h)
-	btn.size = Vector2(btn_w, btn_h)
-	btn.position = Vector2((SCREEN_W - btn_w) / 2.0, 325.0)
-	btn.pressed.connect(_go_to_map_select)
-	parent.add_child(btn)
-	btn.size = Vector2(btn_w, btn_h)  # reaffirm after add_child layout pass
+	btn.add_theme_font_size_override("font_size", 14)
+	btn.custom_minimum_size = Vector2(340.0, 56.0)
+	btn.size = Vector2(340.0, 56.0)
+	btn.mouse_entered.connect(func():
+		if not _navigating:
+			_selected = idx
+			_refresh_buttons()
+	)
+	btn.mouse_exited.connect(func():
+		if not _navigating and _selected == idx:
+			_selected = -1
+			_refresh_buttons()
+	)
+	btn.pressed.connect(func():
+		if not _navigating:
+			_selected = idx
+			_animate_click(btn, idx)
+	)
+	return btn
 
-	# Golden pulse
-	var tween := btn.create_tween().set_loops()
-	tween.tween_property(btn, "modulate", Color(1.18, 1.06, 0.88, 1.0), 0.95).set_trans(Tween.TRANS_SINE)
-	tween.tween_property(btn, "modulate", Color.WHITE, 0.95).set_trans(Tween.TRANS_SINE)
+func _animate_click(btn: Button, idx: int) -> void:
+	if _navigating:
+		return
+	_navigating = true
+	_selected = idx
+	_refresh_buttons()
 
-func _add_hint(parent: Node) -> void:
-	var lbl := Label.new()
-	lbl.text = "or press ENTER"
-	lbl.add_theme_font_override("font", FONT)
-	lbl.add_theme_font_size_override("font_size", 8)
-	lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.38))
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.position = Vector2(0.0, 407.0)
-	lbl.size = Vector2(SCREEN_W, 20.0)
-	parent.add_child(lbl)
+	btn.pivot_offset = btn.size * 0.5
+
+	var tw := btn.create_tween()
+	# Squish down
+	tw.tween_property(btn, "scale", Vector2(1.10, 0.82), 0.07).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tw.set_parallel(true)
+	tw.tween_property(btn, "modulate", Color(2.0, 2.0, 2.0, 1.0), 0.07)
+	tw.set_parallel(false)
+	# Spring back
+	tw.tween_property(btn, "scale", Vector2(1.0, 1.0), 0.18).set_trans(Tween.TRANS_SPRING).set_ease(Tween.EASE_OUT)
+	tw.set_parallel(true)
+	tw.tween_property(btn, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.14)
+	tw.set_parallel(false)
+	tw.tween_callback(func():
+		if idx == 0:
+			_do_play()
+		else:
+			get_tree().quit()
+	)
+
+func _style_btn(btn: Button, active: bool) -> void:
+	var s := StyleBoxFlat.new()
+	if active:
+		s.bg_color = Color(0.07, 0.10, 0.20, 0.88)
+		s.border_width_left   = 4
+		s.border_width_right  = 0
+		s.border_width_top    = 0
+		s.border_width_bottom = 0
+		s.border_color = Color(0.30, 0.55, 1.0, 1.0)
+		s.content_margin_left   = 26.0
+		s.content_margin_top    = 14.0
+		s.content_margin_right  = 12.0
+		s.content_margin_bottom = 14.0
+	else:
+		s.bg_color = Color(0.0, 0.0, 0.0, 0.0)
+		s.border_width_left = 0
+		s.content_margin_left   = 30.0
+		s.content_margin_top    = 14.0
+		s.content_margin_right  = 12.0
+		s.content_margin_bottom = 14.0
+
+	for style_name in ["normal", "hover", "pressed", "focus"]:
+		btn.add_theme_stylebox_override(style_name, s)
+
+	var col := Color(1.0, 0.92, 0.15) if active else Color(0.50, 0.53, 0.62)
+	for col_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		btn.add_theme_color_override(col_name, col)
 
 func _add_credit(parent: Node) -> void:
 	var credit := Label.new()
 	credit.text = "An Alec Ray Game"
 	credit.add_theme_font_override("font", FONT)
 	credit.add_theme_font_size_override("font_size", 8)
-	credit.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.32))
+	credit.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.28))
 	credit.position = Vector2(18.0, SCREEN_H - 22.0)
 	parent.add_child(credit)
 
@@ -224,13 +266,10 @@ func _fade_in() -> void:
 	black.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	fade_layer.add_child(black)
 	var tween := black.create_tween()
-	tween.tween_property(black, "modulate:a", 0.0, 1.0).set_trans(Tween.TRANS_QUAD)
+	tween.tween_property(black, "modulate:a", 0.0, 1.2).set_trans(Tween.TRANS_QUAD)
 	tween.tween_callback(fade_layer.queue_free)
 
-func _go_to_map_select() -> void:
-	if _navigating:
-		return
-	_navigating = true
+func _do_play() -> void:
 	var fade_layer := CanvasLayer.new()
 	fade_layer.layer = 99
 	get_tree().root.add_child(fade_layer)
@@ -244,3 +283,6 @@ func _go_to_map_select() -> void:
 	tween.tween_callback(func(): get_tree().change_scene_to_file("res://scenes/map_selection.tscn"))
 	tween.tween_property(black, "modulate:a", 0.0, 0.45).set_trans(Tween.TRANS_QUAD)
 	tween.tween_callback(fade_layer.queue_free)
+
+func _do_quit() -> void:
+	get_tree().quit()

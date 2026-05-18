@@ -34,9 +34,12 @@ func make_boss(health_mult: float, damage_mult: float) -> void:
 	max_health = int(max_health * health_mult)
 	health = max_health
 	DAMAGE = int(DAMAGE * damage_mult)
-	scale = Vector2(2.0, 2.0)
+	scale = Vector2(1.5, 1.5)
 	aura_color = Color(0.9, 0.1, 0.1)
 	queue_redraw()
+
+func _get_shadow_offset_y() -> float:
+	return 50.0
 
 func _get_melee_range() -> float:
 	return MELEE_RANGE
@@ -45,7 +48,7 @@ func _get_attack_duration() -> float:
 	return 1.4  # 7 frames × 0.2s at 5 FPS
 
 func _physics_process(delta: float) -> void:
-	var player = get_tree().get_first_node_in_group("player")
+	var player := _player if is_instance_valid(_player) else null
 	_attack_cooldown -= delta
 	_attack_timer = maxf(_attack_timer - delta, 0.0)
 
@@ -124,14 +127,11 @@ func _destroy_obstacle(collider: Node) -> void:
 	target.queue_free()
 
 func _draw() -> void:
-	# square ground shadow in local space (320×320 at 2× world scale)
-	draw_rect(Rect2(-50, 115, 100, 45), Color(0, 0, 0, 0.18))
-	# boss-scale aura rings — 5× larger radii than the base enemy
 	if aura_color.a > 0.0:
 		var pulse := sin(_aura_time * 3.0) * 0.35 + 0.65
 		for i in 4:
 			var ring_alpha := (1.0 - float(i) / 4.0) * pulse * 0.7
-			draw_circle(Vector2.ZERO, 90.0 + float(i) * 18.0,
+			draw_circle(Vector2.ZERO, 45.0 + float(i) * 9.0,
 					Color(aura_color.r, aura_color.g, aura_color.b, ring_alpha))
 
 func get_death_color() -> Color:

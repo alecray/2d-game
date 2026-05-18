@@ -1,0 +1,14 @@
+[remap]
+
+importer="aseprite_wizard.plugin.noop"
+type="PackedDataContainer"
+uid="uid://dlmjh4jrr2xee"
+path="res://.godot/imported/pedestal.aseprite-79ed64073ada53089036e64f8a4704bf.res"
+
+[deps]
+
+source_file="res://assets/sprites/environment/pedestal.aseprite"
+dest_files=["res://.godot/imported/pedestal.aseprite-79ed64073ada53089036e64f8a4704bf.res"]
+
+[params]
+

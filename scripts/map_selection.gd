@@ -9,6 +9,7 @@ const MAPS = [
 		"scene": "res://scenes/main.tscn",
 		"bg_color": Color(0.53, 0.81, 0.92),
 		"world_color": Color(0.85, 0.85, 0.65),
+		"fog_color": Color(0.07, 0.04, 0.10, 0.95),
 		"grass_scene": "res://prefabs/environment/grass1.tscn",
 		"spawn_table": [
 			{"scene": "res://prefabs/enemies/spider.tscn", "weight": 55},
@@ -26,6 +27,7 @@ const MAPS = [
 		"scene": "res://scenes/main.tscn",
 		"bg_color": Color(0.72, 0.82, 0.90),
 		"world_color": Color(0.78, 0.90, 1.00),
+		"fog_color": Color(0.04, 0.07, 0.14, 0.95),
 		"grass_scene": "res://prefabs/environment/grass2.tscn",
 		"leaf_palette": [
 			Color(0.75, 0.82, 0.88),
@@ -50,6 +52,7 @@ const MAPS = [
 		"scene": "res://scenes/main.tscn",
 		"bg_color": Color(0.08, 0.10, 0.22),
 		"world_color": Color(0.30, 0.30, 0.50),
+		"fog_color": Color(0.04, 0.02, 0.10, 0.96),
 		"spawn_table": [
 			{"scene": "res://prefabs/enemies/spider.tscn", "weight": 55},
 			{"scene": "res://prefabs/enemies/blob.tscn", "weight": 45},
@@ -98,6 +101,7 @@ func _on_map_selected(data: Dictionary) -> void:
 	state.map_bg_color = data.get("bg_color", Color(0.53, 0.81, 0.92))
 	state.map_bg_texture = data.get("texture", "res://assets/sprites/backgrounds/background-1.png")
 	state.map_world_color = data.get("world_color", Color(0.85, 0.85, 0.65))
+	state.map_fog_color   = data.get("fog_color",   Color(0.96, 0.93, 0.84, 0.90))
 	state.map_grass_scene = data.get("grass_scene", "res://prefabs/environment/grass1.tscn")
 	state.map_leaf_palette = data.get("leaf_palette", [
 		Color(0.04, 0.18, 0.05), Color(0.08, 0.28, 0.09),

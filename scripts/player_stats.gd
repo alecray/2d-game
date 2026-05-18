@@ -45,9 +45,10 @@ const GUN_DEFS = {
 
 var xp: int = 0
 var coins: int = 0
-var boss_tokens: int = 0       # collected across runs; used to spawn the boss
-var unlocked_maps: Array = []  # map names unlocked by defeating bosses
-var owned_guns: Array = []  # purchased gun IDs; pistol is always available without being listed
+var boss_tokens: int = 0
+var unlocked_maps: Array = []
+var unlocked_spells: Array = ["magic_wave"]  # magic_wave is the starter spell, always known
+var owned_guns: Array = []
 var equipped_gun: String = "gun1"
 var levels: Dictionary = {}
 
@@ -110,6 +111,14 @@ func unlock_map(map_name: String) -> void:
 		unlocked_maps.append(map_name)
 		_save()
 
+func has_spell(id: String) -> bool:
+	return id in unlocked_spells
+
+func unlock_spell(id: String) -> void:
+	if not has_spell(id):
+		unlocked_spells.append(id)
+		_save()
+
 func reset() -> void:
 	xp = 0
 	coins = 0
@@ -145,6 +154,7 @@ func _save() -> void:
 	cfg.set_value("stats", "coins", coins)
 	cfg.set_value("stats", "boss_tokens", boss_tokens)
 	cfg.set_value("stats", "unlocked_maps", unlocked_maps)
+	cfg.set_value("stats", "unlocked_spells", unlocked_spells)
 	cfg.set_value("stats", "owned_guns", owned_guns)
 	cfg.set_value("stats", "equipped_gun", equipped_gun)
 	for key in levels:
@@ -159,6 +169,7 @@ func _load() -> void:
 	coins = cfg.get_value("stats", "coins", 0)
 	boss_tokens = cfg.get_value("stats", "boss_tokens", 0)
 	unlocked_maps = cfg.get_value("stats", "unlocked_maps", [])
+	unlocked_spells = cfg.get_value("stats", "unlocked_spells", ["magic_wave"])
 	owned_guns = cfg.get_value("stats", "owned_guns", [])
 	equipped_gun = cfg.get_value("stats", "equipped_gun", "gun1")
 	for key in levels:

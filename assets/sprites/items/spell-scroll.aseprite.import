@@ -1,0 +1,14 @@
+[remap]
+
+importer="aseprite_wizard.plugin.noop"
+type="PackedDataContainer"
+uid="uid://boh8bdub31gm7"
+path="res://.godot/imported/spell-scroll.aseprite-a438810795702fcc4154a2f077101057.res"
+
+[deps]
+
+source_file="res://assets/sprites/items/spell-scroll.aseprite"
+dest_files=["res://.godot/imported/spell-scroll.aseprite-a438810795702fcc4154a2f077101057.res"]
+
+[params]
+

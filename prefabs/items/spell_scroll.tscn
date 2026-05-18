@@ -1,0 +1,39 @@
+[gd_scene format=4 uid="uid://d1wif8qa7tlfn"]
+
+[ext_resource type="Script" path="res://scripts/effects/spell_scroll.gd" id="1_scroll"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_scroll"]
+animations = [{
+"frames": [],
+"loop": true,
+"name": &"default",
+"speed": 10.0
+}]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_scroll"]
+
+[node name="SpellScrollPickup" type="Area2D"]
+script = ExtResource("1_scroll")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+texture_filter = 1
+sprite_frames = SubResource("SpriteFrames_scroll")
+metadata/_aseprite_wizard_interface_config_ = {
+"pending_changes": {}
+}
+metadata/_aseprite_wizard_config_ = {
+"embed_tex": true,
+"layers": [],
+"o_ex_p": "",
+"o_folder": "",
+"o_name": "",
+"only_visible": false,
+"scale": "1.0",
+"should_round_fps": true,
+"slice": "",
+"source": "res://assets/sprites/items/spell-scroll.aseprite",
+"source_uid": 0
+}
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_scroll")

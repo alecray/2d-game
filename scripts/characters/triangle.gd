@@ -21,6 +21,7 @@ func _ready() -> void:
 	max_health = 15
 	_strafe_sign = 1 if randf() < 0.5 else -1
 	fire_timer = randf_range(0.0, FIRE_RATE)  # stagger so a pack doesn't all fire at once
+	spell_drop_id = "lightning_bolt"
 	super._ready()
 
 func _physics_process(delta: float) -> void:

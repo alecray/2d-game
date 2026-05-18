@@ -6,6 +6,8 @@ const BOB_AMPLITUDE = 5.0
 const FONT = preload("res://assets/fonts/PressStart2P-Regular.ttf")
 const GroundShadow = preload("res://scripts/effects/ground_shadow.gd")
 
+var force_single_pickup := false  # set true by Pedestal so one pickup immediately spawns the boss
+var sprite_y_offset: float = 0.0  # base Y for the AnimatedSprite2D; bob animates around this
 var _time := 0.0
 var _shadow: Node2D
 
@@ -26,13 +28,18 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_time += delta
 	var bob := sin(_time * BOB_SPEED) * BOB_AMPLITUDE
-	$AnimatedSprite2D.position.y = bob
+	$AnimatedSprite2D.position.y = sprite_y_offset + bob
 	var bob_t := (bob + BOB_AMPLITUDE) / (BOB_AMPLITUDE * 2.0)
 	_shadow.scale.x = lerp(0.6, 1.0, bob_t)
 	_shadow.modulate.a = lerp(0.12, 0.35, bob_t)
 
 func _on_body_entered(body: Node2D) -> void:
 	if not body.is_in_group("player"):
+		return
+	if force_single_pickup:
+		_spawn_boss_banner()
+		get_tree().call_group_flags(SceneTree.GROUP_CALL_DEFERRED, "main_scene", "spawn_boss")
+		queue_free()
 		return
 	var state := get_node("/root/GameState")
 	state.boss_tokens += 1
@@ -59,17 +66,6 @@ func _spawn_pickup_popup(count: int) -> void:
 	tween.tween_property(label, "modulate:a", 0.0, 1.0).set_delay(0.3)
 	tween.tween_callback(label.queue_free).set_delay(1.0)
 
-func _clear_pickups() -> void:
-	for node in get_tree().get_nodes_in_group("pickup"):
-		if not is_instance_valid(node) or node == self:
-			continue
-		var tween := node.create_tween()
-		tween.tween_property(node, "modulate:a", 0.0, 0.6)
-		tween.tween_callback(node.queue_free)
-	for label in get_tree().get_nodes_in_group("boss_token_counter"):
-		if is_instance_valid(label):
-			var tween := label.create_tween()
-			tween.tween_property(label, "modulate:a", 0.0, 0.4)
 
 func _spawn_boss_banner() -> void:
 	var layer := CanvasLayer.new()
