@@ -36,8 +36,16 @@ const WORLD_BOUNDS = Vector2(1576, 1440)  # half-extents of the background sprit
 
 const MagicWave    = preload("res://scripts/characters/magic_wave.gd")
 const SpiderSummon = preload("res://scripts/characters/spider_summon.gd")
+const PoisonCloud  = preload("res://scripts/characters/poison_cloud.gd")
+const ShatterSpell = preload("res://scripts/characters/shatter_spell.gd")
 
-var active_spell: String = "magic_wave"
+var active_spell: String = "magic_wave":
+	set(v):
+		active_spell = v
+		if not is_inside_tree():
+			return
+		get_node("/root/PlayerStats").active_spell = v
+		get_node("/root/PlayerStats").call("_save")
 const GroundShadow = preload("res://scripts/effects/ground_shadow.gd")
 const BloodParticles = preload("res://scripts/effects/blood_particles.gd")
 const LaserBeam = preload("res://scripts/effects/laser_beam.gd")
@@ -117,6 +125,7 @@ func _ready() -> void:
 
 	# apply persistent upgrades from PlayerStats
 	var stats = get_node("/root/PlayerStats")
+	active_spell = stats.active_spell
 	MAX_HEALTH += stats.health_bonus()
 	health = MAX_HEALTH
 	SPEED += stats.speed_bonus()
@@ -269,6 +278,14 @@ func _cast_spell() -> void:
 			var summon := SpiderSummon.new()
 			add_sibling(summon)
 			summon.global_position = global_position
+		"poison_cloud":
+			var cloud := PoisonCloud.new()
+			add_sibling(cloud)
+			cloud.global_position = global_position
+		"shatter":
+			var spell := ShatterSpell.new()
+			add_sibling(spell)
+			spell.global_position = global_position
 	mana -= MAGIC_COST
 	magic_used.emit(MAGIC_COST)
 
@@ -293,12 +310,61 @@ func _start_death() -> void:
 	_dying = true
 	$HurtBox.monitoring = false
 	_stop_laser()
+	_toss_gun()
 	var sprite := $AnimatedSprite2D_Player
 	sprite.rotation = 0.0
 	sprite.position.y = 0.0
+	sprite.sprite_frames.set_animation_loop("Death", false)
 	sprite.play("Death")
 	sprite.animation_finished.connect(_on_death_animation_finished, CONNECT_ONE_SHOT)
 	_death_camera_effect()
+
+func _toss_gun() -> void:
+	if not is_instance_valid(_gun):
+		return
+
+	_gun.flip_v = false
+	var peak := Vector2(0.0, -10.0)
+	var land := Vector2(0.0, 10.0)
+
+	# Quick pop to the peak
+	var pos_tw := _gun.create_tween()
+	pos_tw.tween_property(_gun, "position", peak, 0.30) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+	# Slow upward drift after the pop — killed when animation_finished fires
+	var drift_tw := _gun.create_tween()
+	drift_tw.tween_property(_gun, "position", Vector2(0.0, -28.0), 8.0) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+
+	# Fast spin — killed when animation_finished fires
+	var spin_tw := _gun.create_tween()
+	spin_tw.tween_property(_gun, "rotation", _gun.rotation + TAU * 20.0, 3.5) \
+		.set_trans(Tween.TRANS_LINEAR)
+
+	# Fall triggered when the death animation finishes
+	var sprite := $AnimatedSprite2D_Player
+	sprite.animation_finished.connect(func() -> void:
+		if not is_instance_valid(_gun):
+			return
+		spin_tw.kill()
+		drift_tw.kill()
+
+		var down := _gun.create_tween()
+		# Drop straight down
+		down.tween_property(_gun, "position", land, 0.22) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		# Impact squish
+		down.tween_property(_gun, "scale", Vector2(1.35, 0.60), 0.06)
+		# Bounce up then back down
+		down.set_parallel(true)
+		down.tween_property(_gun, "position", land + Vector2(0.0, -7.0), 0.09) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		down.tween_property(_gun, "scale", Vector2(1.0, 1.0), 0.09)
+		down.set_parallel(false)
+		down.tween_property(_gun, "position", land, 0.10) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	, CONNECT_ONE_SHOT)
 
 func _death_camera_effect() -> void:
 	var vp := get_viewport()

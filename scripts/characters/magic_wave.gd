@@ -4,6 +4,7 @@ extends Node2D
 
 const EXPAND_SPEED = 250.0
 const MAX_RADIUS   = 350.0
+const DAMAGE       = 60
 
 var radius = 0.0
 var _hit   = {}
@@ -67,7 +68,7 @@ func _process(delta: float) -> void:
 			continue
 		if global_position.distance_to(enemy.global_position) <= radius:
 			_hit[enemy] = true
-			enemy.die()
+			enemy.take_damage(DAMAGE)
 
 	if radius >= MAX_RADIUS:
 		set_process(false)  # stop hit detection; particles finish on their own

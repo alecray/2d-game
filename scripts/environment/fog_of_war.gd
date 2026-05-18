@@ -8,7 +8,7 @@ const CELL_SIZE    := 8.0
 const LOS_RAYS     := 180    # angular rays for LOS — more = smoother fog boundary
 const VIEW_RANGE   := 400.0  # world-px radius revealed around the player
 const SAMPLE_DIST  := 16.0   # world-px movement before re-running LOS
-const FADE_SPEED        := 6.0   # reveal alpha units per second (1/FADE_SPEED = fade duration)
+const FADE_SPEED        := 1.0   # reveal alpha units per second (1/FADE_SPEED = fade duration)
 const ENEMY_FADE_SPEED  := 6.0   # how fast enemies fade in/out at fog boundary
 
 # Minimap
@@ -20,6 +20,7 @@ var _fog_img   : Image
 var _fog_tex   : ImageTexture
 var _mat       : ShaderMaterial
 var _mm_dot    : ColorRect
+var _mm_layer  : CanvasLayer
 var _elapsed_time : float = 0.0
 
 var _player : Node2D
@@ -44,18 +45,25 @@ func setup(player: Node2D, maze_origin: Vector2, maze_world_size: Vector2) -> vo
 
 func _ready() -> void:
 	layer = 8
+	# World-space: the fog layer pans and zooms with the camera so the overlay
+	# always correctly covers the maze regardless of camera zoom level.
+	follow_viewport_enabled = true
 
 	_fog_img = Image.create(_cols, _rows, false, Image.FORMAT_L8)
 	_fog_img.fill(Color.BLACK)
 	_fog_tex = ImageTexture.create_from_image(_fog_img)
 
+	# Cover the maze in world coordinates — UV maps directly to fog_uv in the shader.
 	var rect := ColorRect.new()
-	rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	rect.position = _origin
+	rect.size = _size
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	_mat = ShaderMaterial.new()
 	_mat.shader = FOG_SHADER
 	_mat.set_shader_parameter("fog_mask", _fog_tex)
+	_mat.set_shader_parameter("maze_origin", _origin)
+	_mat.set_shader_parameter("maze_size",   _size)
 
 	var noise := FastNoiseLite.new()
 	noise.seed = randi()
@@ -70,14 +78,11 @@ func _ready() -> void:
 	rect.material = _mat
 	add_child(rect)
 
-	# Static params — set once; only player_world_pos and time need per-frame updates.
-	var vp_ready := get_viewport()
-	var cam_ready := vp_ready.get_camera_2d() if vp_ready else null
-	_mat.set_shader_parameter("viewport_size", vp_ready.get_visible_rect().size if vp_ready else Vector2(1280, 720))
-	_mat.set_shader_parameter("camera_zoom",   cam_ready.zoom.x if cam_ready else 1.0)
-	_mat.set_shader_parameter("maze_origin",   _origin)
-	_mat.set_shader_parameter("maze_size",     _size)
-
+	# Minimap lives on its own screen-fixed CanvasLayer so it isn't affected by
+	# follow_viewport_enabled scaling on this layer.
+	_mm_layer = CanvasLayer.new()
+	_mm_layer.layer = 9
+	add_child(_mm_layer)
 	_build_minimap()
 
 func _process(delta: float) -> void:
@@ -85,11 +90,7 @@ func _process(delta: float) -> void:
 		return
 
 	_elapsed_time += delta
-	var _vp := get_viewport()
-	var _cam := _vp.get_camera_2d() if _vp else null
-	var _cam_center := _player.global_position + (_cam.offset if _cam else Vector2.ZERO)
-	_mat.set_shader_parameter("player_world_pos", _cam_center)
-	_mat.set_shader_parameter("time",             _elapsed_time)
+	_mat.set_shader_parameter("time", _elapsed_time)
 
 	if _first_tick or _player.global_position.distance_to(_last_pos) >= SAMPLE_DIST:
 		_first_tick = false
@@ -192,7 +193,7 @@ func _build_minimap() -> void:
 	mm.position = Vector2(vp_size.x - MM_W - MM_PAD, MM_PAD)
 	mm.size     = Vector2(MM_W, MM_H)
 	mm.mouse_filter  = Control.MOUSE_FILTER_IGNORE
-	add_child(mm)
+	_mm_layer.add_child(mm)
 
 	var bg := ColorRect.new()
 	bg.color = Color(0.06, 0.06, 0.10, 0.90)

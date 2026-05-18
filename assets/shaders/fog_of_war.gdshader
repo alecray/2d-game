@@ -3,12 +3,12 @@ shader_type canvas_item;
 uniform sampler2D fog_mask      : filter_nearest;
 uniform sampler2D fog_noise_tex : repeat_enable, filter_linear;
 uniform vec4  fog_color        = vec4(0.0, 0.0, 0.0, 0.94);
-uniform vec2  player_world_pos = vec2(0.0);
-uniform vec2  viewport_size    = vec2(1280.0, 720.0);
-uniform float camera_zoom      = 1.0;
 uniform vec2  maze_origin      = vec2(-1648.0, -1456.0);
 uniform vec2  maze_size        = vec2(3296.0, 2912.0);
 uniform float time             = 0.0;
+
+// The ColorRect covers exactly the maze in world space (follow_viewport_enabled = true),
+// so UV(0,0) = maze top-left and UV(1,1) = maze bottom-right.  No camera math needed.
 
 float fog_sample(vec2 uv) {
 	if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) return 0.0;
@@ -16,9 +16,8 @@ float fog_sample(vec2 uv) {
 }
 
 void fragment() {
-	vec2 offset    = (UV - vec2(0.5)) * viewport_size / camera_zoom;
-	vec2 world_pos = player_world_pos + offset;
-	vec2 fog_uv    = (world_pos - maze_origin) / maze_size;
+	vec2 fog_uv    = UV;
+	vec2 world_pos = maze_origin + UV * maze_size;
 
 	float revealed = fog_sample(fog_uv);
 	float alpha = (1.0 - revealed) * fog_color.a;

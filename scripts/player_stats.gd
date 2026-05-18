@@ -48,6 +48,7 @@ var coins: int = 0
 var boss_tokens: int = 0
 var unlocked_maps: Array = []
 var unlocked_spells: Array = ["magic_wave"]  # magic_wave is the starter spell, always known
+var active_spell: String = "magic_wave"
 var owned_guns: Array = []
 var equipped_gun: String = "gun1"
 var levels: Dictionary = {}
@@ -122,9 +123,12 @@ func unlock_spell(id: String) -> void:
 func reset() -> void:
 	xp = 0
 	coins = 0
+	boss_tokens = 0
+	unlocked_maps = []
+	unlocked_spells = ["magic_wave"]
+	active_spell = "magic_wave"
 	owned_guns = []
 	equipped_gun = "gun1"
-	unlocked_maps = []
 	for key in levels:
 		levels[key] = 0
 	_save()
@@ -155,6 +159,7 @@ func _save() -> void:
 	cfg.set_value("stats", "boss_tokens", boss_tokens)
 	cfg.set_value("stats", "unlocked_maps", unlocked_maps)
 	cfg.set_value("stats", "unlocked_spells", unlocked_spells)
+	cfg.set_value("stats", "active_spell", active_spell)
 	cfg.set_value("stats", "owned_guns", owned_guns)
 	cfg.set_value("stats", "equipped_gun", equipped_gun)
 	for key in levels:
@@ -170,6 +175,7 @@ func _load() -> void:
 	boss_tokens = cfg.get_value("stats", "boss_tokens", 0)
 	unlocked_maps = cfg.get_value("stats", "unlocked_maps", [])
 	unlocked_spells = cfg.get_value("stats", "unlocked_spells", ["magic_wave"])
+	active_spell = cfg.get_value("stats", "active_spell", "magic_wave")
 	owned_guns = cfg.get_value("stats", "owned_guns", [])
 	equipped_gun = cfg.get_value("stats", "equipped_gun", "gun1")
 	for key in levels:

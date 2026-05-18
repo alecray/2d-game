@@ -7,7 +7,6 @@ func _ready() -> void:
 	$Panel/VBox/BtnGodMode.pressed.connect(_on_toggle_god_mode)
 	$Panel/VBox/BtnMovePedestal.pressed.connect(_on_move_pedestal)
 	$Panel/VBox/BtnNoClip.pressed.connect(_on_toggle_noclip)
-	$Panel/VBox/BtnResetStats.pressed.connect(_on_reset_stats)
 	$Panel/VBox/BtnSpellDrop.pressed.connect(_on_toggle_spell_drop)
 	$Panel/VBox/BtnClose.pressed.connect(_toggle)
 
@@ -34,9 +33,6 @@ func _on_toggle_god_mode() -> void:
 	state.dev_god_mode = not state.dev_god_mode
 	var label := "ON" if state.dev_god_mode else "OFF"
 	$Panel/VBox/BtnGodMode.text = "GOD MODE: " + label
-
-func _on_reset_stats() -> void:
-	get_node("/root/PlayerStats").reset()
 
 func _on_move_pedestal() -> void:
 	var player := get_tree().get_first_node_in_group("player")

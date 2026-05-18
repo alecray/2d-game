@@ -17,9 +17,11 @@ const MENU_LABELS := ["PLAY", "QUIT"]
 const MENU_START_Y := 250.0
 const MENU_ITEM_H  := 68.0
 
-var _selected   := -1
-var _navigating := false
-var _btns: Array = []
+var _selected    := -1
+var _navigating  := false
+var _btns: Array  = []
+var _reset_armed := false
+var _reset_btn: Button = null
 
 func _ready() -> void:
 	RenderingServer.set_default_clear_color(Color.BLACK)
@@ -128,6 +130,7 @@ func _build_ui() -> void:
 	_add_title(layer)
 	_add_menu(layer)
 	_add_credit(layer)
+	_add_dev_reset(layer)
 
 func _add_title(parent: Node) -> void:
 	var lbl := Label.new()
@@ -266,7 +269,7 @@ func _fade_in() -> void:
 	black.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	fade_layer.add_child(black)
 	var tween := black.create_tween()
-	tween.tween_property(black, "modulate:a", 0.0, 1.2).set_trans(Tween.TRANS_QUAD)
+	tween.tween_property(black, "modulate:a", 0.0, 1.6).set_trans(Tween.TRANS_QUAD)
 	tween.tween_callback(fade_layer.queue_free)
 
 func _do_play() -> void:
@@ -286,3 +289,39 @@ func _do_play() -> void:
 
 func _do_quit() -> void:
 	get_tree().quit()
+
+func _add_dev_reset(parent: Node) -> void:
+	_reset_btn = Button.new()
+	_reset_btn.text = "[ DEV ] RESET SAVE"
+	_reset_btn.add_theme_font_override("font", FONT)
+	_reset_btn.add_theme_font_size_override("font_size", 6)
+	_reset_btn.add_theme_color_override("font_color",       Color(0.85, 0.50, 0.15, 0.70))
+	_reset_btn.add_theme_color_override("font_hover_color", Color(1.00, 0.65, 0.20, 1.00))
+	var flat := StyleBoxFlat.new()
+	flat.bg_color = Color(0, 0, 0, 0)
+	for sn in ["normal", "hover", "pressed", "focus"]:
+		_reset_btn.add_theme_stylebox_override(sn, flat)
+	_reset_btn.position = Vector2(SCREEN_W - 220.0, SCREEN_H - 24.0)
+	_reset_btn.pressed.connect(_on_dev_reset_pressed)
+	parent.add_child(_reset_btn)
+
+func _on_dev_reset_pressed() -> void:
+	if not _reset_armed:
+		_reset_armed = true
+		_reset_btn.text = "CONFIRM RESET?"
+		_reset_btn.add_theme_color_override("font_color",       Color(1.0, 0.25, 0.25, 0.90))
+		_reset_btn.add_theme_color_override("font_hover_color", Color(1.0, 0.35, 0.35, 1.00))
+		get_tree().create_timer(3.0).timeout.connect(_disarm_reset, CONNECT_ONE_SHOT)
+	else:
+		get_node("/root/PlayerStats").reset()
+		_reset_armed = false
+		_reset_btn.text = "SAVE CLEARED"
+		_reset_btn.add_theme_color_override("font_color",       Color(0.35, 1.0, 0.55, 0.80))
+		_reset_btn.add_theme_color_override("font_hover_color", Color(0.35, 1.0, 0.55, 0.80))
+		get_tree().create_timer(1.8).timeout.connect(_disarm_reset, CONNECT_ONE_SHOT)
+
+func _disarm_reset() -> void:
+	_reset_armed = false
+	_reset_btn.text = "[ DEV ] RESET SAVE"
+	_reset_btn.add_theme_color_override("font_color",       Color(0.85, 0.50, 0.15, 0.70))
+	_reset_btn.add_theme_color_override("font_hover_color", Color(1.00, 0.65, 0.20, 1.00))

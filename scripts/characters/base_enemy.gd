@@ -56,6 +56,7 @@ var _sep_offset: int = 0    # stagger so enemies don't all recalculate separatio
 var _cached_separation: Vector2 = Vector2.ZERO
 var spell_drop_id: String = ""  # spell scroll this enemy can drop; set in subclass _ready()
 var is_horde := false           # set true by main.gd when spawned as part of a horde wave
+var frozen := false             # set true by shatter spell; stops all movement
 
 const KNOCKBACK_FRICTION = 14.0
 const ATTACK_DURATION = 0.7     # default seconds locked in melee animation (override via _get_attack_duration)
@@ -111,6 +112,10 @@ func is_contact_damage_active() -> bool:
 	return _attack_timer > 0.0 and _attack_timer <= _get_attack_duration() * ATTACK_HIT_WINDOW_FRAC
 
 func _physics_process(delta: float) -> void:
+	if frozen:
+		velocity = Vector2.ZERO
+		return
+
 	var player := _player if is_instance_valid(_player) else null
 	_attack_cooldown -= delta
 
