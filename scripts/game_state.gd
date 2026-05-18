@@ -23,6 +23,7 @@ var boss_tokens: int = 0               # tokens collected this run; reaching 5 s
 var dev_boss_token_force: bool = false  # set by dev menu; makes boss tokens drop 100% of the time
 var dev_god_mode: bool = false          # set by dev menu; player takes no damage
 var dev_spell_drop_force: bool = false  # set by dev menu; makes spell scrolls drop 100% of the time
+var dev_mimic_force: bool = false       # set by dev menu; makes every breakable wall spawn a mimic at half HP
 var map_boss_scene: String = "res://prefabs/enemies/boss_goblin.tscn"
 var map_boss_health_mult: float = 1.0
 var map_boss_damage_mult: float = 1.0

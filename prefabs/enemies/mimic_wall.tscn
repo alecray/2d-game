@@ -1,0 +1,185 @@
+[gd_scene format=4 uid="uid://cvh5m3jxab8p1"]
+
+[ext_resource type="Script" uid="uid://bpi7rdvb0wibr" path="res://scripts/characters/mimic_wall.gd" id="1_mimic"]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_chuco"]
+_data = PackedByteArray("AAADAAUAAAABAAAAgAAAAIAAAAAKBAAAUklGRgIEAABXRUJQVlA4TPUDAAAvf8AfEG+gJpKt5v8PtHhAAOoxk2OVS0p8qI1kK/n/QzF0QY2U5xZZ7gSKIklxcIAgfCCaH6/LOYu4qvkPAHDHO74QLXuLSI8sN7qevky0+NJUpjKlKlsc0JX/P24bwamT3f27crlGZpijvPMAnPTRDvZu89+rO3+5avpfqxLaVDt8BdayG+gNzIdZgOQfBEXvUUX0H5LbSI4kxm1mTWSMeYQJw1wfQopZX48Q6hpA6gDmEFbYo2Ymci4EAFioRyOycA9JAJE34EV6NNK23zpclOzh/TdTPdD8lbDEv1Sqxy5h2Xk/ULVtu4nati3Vw3u/ifwIf2wfRh+jUj22/kG0nVBZ6xzbtn1YuIf3DwavA8DcdczW/gos2qOucSP3uHliSImZ3yMgxcV0zJx1hx46+Ywmfq6EjJ56AAb24XvHzAhBu+MIqMnvdd0fMu9Ynt4zp5fplRjtjiXM31HvZdTodyxP76n3mp0jMLvnMRi/EsNhzOwcoRDqGhi8IcAcwvLK7xBqZiLnhh+QHLN7JI3IFH2HIiQBRN6AdSV61I08fvyFw8WQtmMRaF4kLPEvReqOoztm9UD1+PHjTfR4QNkx546cHuBHj+9Gjwa0HZU7snuAK2udY/v48V3w9I7ZdzRC9GqyB8DcdczW/gpoO+bdgeYsYTkjUgxeT33HrDsqItpElEffMesOPqXz6DSTtmPOHZM9iM4jNXPvyOkxX4EehpSY4jK+WMrvYOjkM5r8uVA6GTLuuPmCFBfTMfNKezCwD987ZsYKe4xy3R9Cyhp7mF6JWV+PAhkvNRxqokfoQ8rt8kIYft5jPvzAl6FoTwzepzUzkXP78AHA1TIakRlm3BkCACSNeP+N+wMigh8ui2hEJqHy3m/c62bn/du/6Tvl3MmSACJvwCGAt/5BVPl8jUjOTrgYqQHmrvuFK2uBK22nvDubXcKy817xsv49UyNEr8Z3TuzM4jNl7IzmLGE5I5rcmbdDWjJfVyLaRDRWWescW+8fRIZOPqPJn8t6XU/pPDqNJnditvZXIIOys3In0bmirpFlcue8OwtQd9Z6FjG1cy41GZSdS8j4nCs7Z96pxOiK35mh/M7qw8dAD1JcTMfMoUDmKt9zgIF9+N4xM/Reeo/5Fug5ynV/GOyi36H3mG+JnqZXYvQ7tB4llO+pR+2V0eMIhFH6kHLbFE8IE5+3Dz/wZVhAzUzk3D58AHC1jEZkWY14/437AyKCHy4XgMp7v3Gvm533b5fBW/8gqvxSaoC5637hylrgakkv69/XSU15hk4+o8mf+x+GvfW5nfq5I7D8526FkOJiOmZeKQb24XvHzFilQa77w+DX1sj0SszqGAA=")
+size_override = Vector2(128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2yhd4"]
+atlas = SubResource("PortableCompressedTexture2D_chuco")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ldo3t"]
+atlas = SubResource("PortableCompressedTexture2D_chuco")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ar4ef"]
+atlas = SubResource("PortableCompressedTexture2D_chuco")
+region = Rect2(64, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uc56i"]
+atlas = SubResource("PortableCompressedTexture2D_chuco")
+region = Rect2(96, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_k77hx"]
+atlas = SubResource("PortableCompressedTexture2D_chuco")
+region = Rect2(0, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mibf6"]
+atlas = SubResource("PortableCompressedTexture2D_chuco")
+region = Rect2(32, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uygqx"]
+atlas = SubResource("PortableCompressedTexture2D_chuco")
+region = Rect2(64, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nrxip"]
+atlas = SubResource("PortableCompressedTexture2D_chuco")
+region = Rect2(96, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lit41"]
+atlas = SubResource("PortableCompressedTexture2D_chuco")
+region = Rect2(0, 64, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6dxjp"]
+atlas = SubResource("PortableCompressedTexture2D_chuco")
+region = Rect2(64, 64, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m01eh"]
+atlas = SubResource("PortableCompressedTexture2D_chuco")
+region = Rect2(96, 64, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_c0cci"]
+atlas = SubResource("PortableCompressedTexture2D_chuco")
+region = Rect2(0, 96, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tiim1"]
+atlas = SubResource("PortableCompressedTexture2D_chuco")
+region = Rect2(32, 64, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_yyga0"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2yhd4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ldo3t")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ar4ef")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_uc56i")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_k77hx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mibf6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_uygqx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nrxip")
+}],
+"loop": true,
+"name": &"Awake",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nrxip")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nrxip")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lit41")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lit41")
+}],
+"loop": true,
+"name": &"Idle",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nrxip")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6dxjp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_m01eh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_c0cci")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6dxjp")
+}],
+"loop": true,
+"name": &"Melee",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nrxip")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tiim1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nrxip")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tiim1")
+}],
+"loop": true,
+"name": &"Walk",
+"speed": 10.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mimic"]
+size = Vector2(28, 28)
+
+[node name="MimicWall" type="CharacterBody2D" unique_id=5551001]
+script = ExtResource("1_mimic")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=5551002]
+texture_filter = 1
+sprite_frames = SubResource("SpriteFrames_yyga0")
+animation = &"Awake"
+metadata/_aseprite_wizard_interface_config_ = {
+"animation_section": false,
+"layer_section": false,
+"output_section": false,
+"pending_changes": {},
+"slice_section": false
+}
+metadata/_aseprite_wizard_config_ = {
+"embed_tex": true,
+"layers": [],
+"o_ex_p": "",
+"o_folder": "",
+"o_name": "",
+"only_visible": false,
+"scale": "1.0",
+"should_round_fps": true,
+"slice": "",
+"source": "res://assets/sprites/characters/mimic-wall.aseprite",
+"source_uid": 2994839589996770569
+}
+metadata/_aseprite_wizard_source_file_hash_ = "3ea17857009fa8f782ed8bbff44859f2"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=5551003]
+shape = SubResource("RectangleShape2D_mimic")
+
+[node name="Area2D" type="Area2D" parent="." unique_id=5551004]
+
+[node name="CollisionShape2D_Area" type="CollisionShape2D" parent="Area2D" unique_id=5551005]
+shape = SubResource("RectangleShape2D_mimic")

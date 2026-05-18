@@ -1,10 +1,13 @@
 extends "res://scripts/environment/wall.gd"
 
-const WALL2_TEX    := preload("res://assets/sprites/environment/wall2.png")
-const WALL3_TEX    := preload("res://assets/sprites/environment/wall3.png")
-const MAX_HEALTH   := 100
+const WALL2_TEX        := preload("res://assets/sprites/environment/wall2.png")
+const WALL3_TEX        := preload("res://assets/sprites/environment/wall3.png")
+const MIMIC_WALL_SCENE := preload("res://prefabs/enemies/mimic_wall.tscn")
+const MAX_HEALTH       := 100
+const MIMIC_CHANCE     := 0.25  # 1-in-4 breakable walls becomes a mimic at half HP
 
 var health := MAX_HEALTH
+var _mimic_spawned := false
 
 func _ready() -> void:
 	texture = WALL2_TEX
@@ -19,6 +22,10 @@ func take_damage(amount: int, hit_normal: Vector2 = Vector2.ZERO) -> void:
 	_spawn_chip_particles(hit_normal)
 	if health <= MAX_HEALTH / 2 and texture != WALL3_TEX:
 		texture = WALL3_TEX
+		if not _mimic_spawned and (get_node("/root/GameState").dev_mimic_force or randf() < MIMIC_CHANCE):
+			_mimic_spawned = true
+			_spawn_mimic()
+			return  # wall is gone; don't redraw
 	queue_redraw()
 
 func _draw() -> void:
@@ -33,6 +40,13 @@ func _draw() -> void:
 	var fill: float = bar_w * (float(health) / MAX_HEALTH)
 	var col := Color(0.2, 0.85, 0.2) if health > MAX_HEALTH * 0.5 else Color(0.9, 0.2, 0.2)
 	draw_rect(Rect2(bar_x, bar_y, fill, bar_h), col)
+
+func _spawn_mimic() -> void:
+	_spawn_explode_particles()
+	var mimic := MIMIC_WALL_SCENE.instantiate()
+	get_parent().add_child(mimic)
+	mimic.global_position = global_position
+	queue_free()
 
 func _die() -> void:
 	_spawn_explode_particles()

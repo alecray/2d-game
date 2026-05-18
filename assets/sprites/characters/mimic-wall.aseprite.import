@@ -1,0 +1,14 @@
+[remap]
+
+importer="aseprite_wizard.plugin.noop"
+type="PackedDataContainer"
+uid="uid://biwytnq07ldph"
+path="res://.godot/imported/mimic-wall.aseprite-674a6e48699b078d1d89e4b2ccfaf526.res"
+
+[deps]
+
+source_file="res://assets/sprites/characters/mimic-wall.aseprite"
+dest_files=["res://.godot/imported/mimic-wall.aseprite-674a6e48699b078d1d89e4b2ccfaf526.res"]
+
+[params]
+

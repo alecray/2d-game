@@ -424,6 +424,12 @@ theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 10
 text = "SPELL DROP 100%: OFF"
 
+[node name="BtnMimicForce" type="Button" parent="DevMenu/Panel/VBox" unique_id=111111127]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 10
+text = "MIMIC SPAWN 100%: OFF"
+
 [node name="Sep2" type="HSeparator" parent="DevMenu/Panel/VBox" unique_id=111111118]
 layout_mode = 2
 

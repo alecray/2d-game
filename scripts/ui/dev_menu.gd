@@ -8,6 +8,7 @@ func _ready() -> void:
 	$Panel/VBox/BtnMovePedestal.pressed.connect(_on_move_pedestal)
 	$Panel/VBox/BtnNoClip.pressed.connect(_on_toggle_noclip)
 	$Panel/VBox/BtnSpellDrop.pressed.connect(_on_toggle_spell_drop)
+	$Panel/VBox/BtnMimicForce.pressed.connect(_on_toggle_mimic_force)
 	$Panel/VBox/BtnClose.pressed.connect(_toggle)
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -51,3 +52,8 @@ func _on_toggle_spell_drop() -> void:
 	var state := get_node("/root/GameState")
 	state.dev_spell_drop_force = not state.dev_spell_drop_force
 	$Panel/VBox/BtnSpellDrop.text = "SPELL DROP 100%: " + ("ON" if state.dev_spell_drop_force else "OFF")
+
+func _on_toggle_mimic_force() -> void:
+	var state := get_node("/root/GameState")
+	state.dev_mimic_force = not state.dev_mimic_force
+	$Panel/VBox/BtnMimicForce.text = "MIMIC SPAWN 100%: " + ("ON" if state.dev_mimic_force else "OFF")
