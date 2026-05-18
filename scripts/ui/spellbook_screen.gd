@@ -13,8 +13,8 @@ const SPELLS := [
 	},
 	{
 		"id":   "frost_nova",
-		"name": "FROST NOVA",
-		"desc": "A burst of ice that\nfreezes nearby enemies\nin place",
+		"name": "SPIDER ALLY",
+		"desc": "Summons a spider ally\nthat hunts enemies\nfor 60 seconds",
 		"cost": 40,
 		"source": "Dropped by Spiders",
 	},

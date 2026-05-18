@@ -45,12 +45,22 @@ const FONT_BOSS = preload("res://assets/fonts/PressStart2P-Regular.ttf")
 const BossDeathParticles = preload("res://scripts/effects/enemy_death_particles.gd")
 const BossHealthBarScript = preload("res://scripts/ui/boss_health_bar.gd")
 const BossArrowScene = preload("res://prefabs/ui/boss_arrow.tscn")
+const HordeBarScript         = preload("res://scripts/ui/horde_bar.gd")
+const HordeSpawnParticles    = preload("res://scripts/effects/horde_spawn_particles.gd")
+
+const HORDE_KILLS_NEEDED := 20
+const HORDE_SPAWN_COUNT  := 30
 
 var _grass_scene: PackedScene
 var _spawn_table: Array = []
 var _next_pack_id := 0
 var _boss_alive := false
 var _boss_triggered := false
+var _horde_active      := false
+var _horde_start_kills := 0
+var _horde_kills       := 0
+var _horde_bar: Control = null
+var _fog: CanvasLayer = null
 
 func _ready() -> void:
 	add_to_group("main_scene")
@@ -101,8 +111,8 @@ func _spawn_hint_banner() -> void:
 	lbl.modulate.a = 0.0
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	lbl.offset_top = 48
-	lbl.offset_bottom = 90
+	lbl.offset_top = 180
+	lbl.offset_bottom = 222
 	layer.add_child(lbl)
 	var tween := lbl.create_tween()
 	tween.tween_property(lbl, "modulate:a", 1.0, 0.6).set_trans(Tween.TRANS_QUAD)
@@ -193,12 +203,12 @@ func _spawn_fog() -> void:
 	var maze_w := float((MAZE_COLS * G + 1) * WALL_UNIT)
 	var maze_h := float((MAZE_ROWS * G + 1) * WALL_UNIT)
 	var origin := Vector2(-maze_w * 0.5, -maze_h * 0.5)
-	var fog    := CanvasLayer.new()
-	fog.set_script(FogOfWar)
+	_fog = CanvasLayer.new()
+	_fog.set_script(FogOfWar)
 	# setup() before add_child() so _origin/_size exist when _ready() builds the wall map
-	fog.setup(player, origin, Vector2(maze_w, maze_h))
-	add_child(fog)
-	fog.set_fog_color(get_node("/root/GameState").map_fog_color)
+	_fog.setup(player, origin, Vector2(maze_w, maze_h))
+	add_child(_fog)
+	_fog.set_fog_color(get_node("/root/GameState").map_fog_color)
 
 func _setup_lighting() -> void:
 	var canvas_mod = CanvasModulate.new()
@@ -397,7 +407,7 @@ func _pick_enemy_scene() -> PackedScene:
 	return _spawn_table[-1]["scene"]
 
 ## Spawns one enemy near the given cluster origin
-func spawn_enemy(cluster_origin: Vector2, is_elite: bool = false, pack_id: int = -1, diff_scale: float = 1.0) -> void:
+func spawn_enemy(cluster_origin: Vector2, is_elite: bool = false, pack_id: int = -1, diff_scale: float = 1.0) -> Node:
 	var scene := _pick_enemy_scene()
 	var enemy = scene.instantiate()
 	var scatter = Vector2.from_angle(randf() * TAU) * randf() * CLUSTER_SPREAD
@@ -413,6 +423,7 @@ func spawn_enemy(cluster_origin: Vector2, is_elite: bool = false, pack_id: int =
 	elif randf() < RARE_CHANCE:
 		enemy.make_rare()
 	enemy.apply_difficulty(diff_scale)
+	return enemy
 
 ## Spawns the map's boss when called by boss_token.gd via the main_scene group.
 func spawn_boss() -> void:
@@ -436,6 +447,109 @@ func spawn_boss() -> void:
 	add_child(boss)
 	boss.make_boss(state.map_boss_health_mult, state.map_boss_damage_mult)
 	boss.boss_died.connect(_on_boss_defeated)
+	_do_boss_spawn_cinematic(boss)
+
+func _do_boss_spawn_cinematic(boss: Node) -> void:
+	var vp := get_viewport()
+	var camera := vp.get_camera_2d() if vp else null
+
+	# Freeze boss until cinematic ends
+	boss.scale = Vector2.ZERO
+	boss.modulate.a = 0.0
+	boss.set_physics_process(false)
+	boss.set_process(false)
+
+	if not camera:
+		_finish_boss_spawn(boss)
+		return
+
+	var was_smoothing := camera.position_smoothing_enabled
+	camera.position_smoothing_enabled = false
+	var pan_offset: Vector2 = boss.global_position - player.global_position
+
+	var seq := create_tween()
+	# Pan to boss
+	seq.tween_property(camera, "offset", pan_offset, 1.2) \
+			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	# Arrive: destroy surroundings, shake, boss rises
+	seq.tween_callback(func() -> void:
+		_destroy_boss_surroundings(boss.global_position, 200.0)
+		_shake_camera_boss_spawn(camera, pan_offset)
+		_animate_boss_rise(boss)
+		if is_instance_valid(_fog):
+			_fog.reveal_area(boss.global_position, 300.0)
+	)
+	# Hold while animation plays
+	seq.tween_interval(2.0)
+	# Pan back to player
+	seq.tween_property(camera, "offset", Vector2.ZERO, 1.0) \
+			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	# Restore and activate
+	seq.tween_callback(func() -> void:
+		camera.position_smoothing_enabled = was_smoothing
+		_finish_boss_spawn(boss)
+	)
+
+func _shake_camera_boss_spawn(camera: Camera2D, base_offset: Vector2) -> void:
+	var shake := create_tween()
+	var steps := 16
+	var total_dur := 0.9
+	for i in steps:
+		var t := float(i) / float(steps)
+		var intensity := 24.0 * (1.0 - t)
+		var jitter := Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)).normalized() * intensity
+		shake.tween_property(camera, "offset", base_offset + jitter, total_dur / steps)
+	shake.tween_property(camera, "offset", base_offset, total_dur / steps)
+
+func _animate_boss_rise(boss: Node) -> void:
+	# Burst of red particles at spawn point
+	var px := CPUParticles2D.new()
+	px.set_script(BossDeathParticles)
+	px.base_color = Color(0.9, 0.1, 0.1)
+	px.base_amount = 60
+	add_child(px)
+	px.global_position = boss.global_position
+
+	# Scale and fade in with overshoot
+	var tween := boss.create_tween().set_parallel(true)
+	tween.tween_property(boss, "modulate:a", 1.0, 0.5)
+	tween.tween_property(boss, "scale", Vector2(2.2, 2.2), 0.35) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.chain().tween_property(boss, "scale", Vector2(1.5, 1.5), 0.25) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func _destroy_boss_surroundings(center: Vector2, radius: float) -> void:
+	for wall in get_tree().get_nodes_in_group("breakable_wall"):
+		if not is_instance_valid(wall):
+			continue
+		if wall.global_position.distance_to(center) <= radius:
+			wall.take_damage(9999)
+	for wall in get_tree().get_nodes_in_group("destructible_wall"):
+		if not is_instance_valid(wall) or wall.is_in_group("breakable_wall"):
+			continue
+		if wall.global_position.distance_to(center) <= radius and randf() < 0.6:
+			var px := CPUParticles2D.new()
+			px.set_script(BossDeathParticles)
+			px.base_color = Color(0.55, 0.50, 0.40)
+			px.base_amount = 22
+			add_child(px)
+			px.global_position = wall.global_position
+			wall.queue_free()
+	for pickup in get_tree().get_nodes_in_group("pickup"):
+		if not is_instance_valid(pickup):
+			continue
+		if pickup.global_position.distance_to(center) <= radius:
+			var px := CPUParticles2D.new()
+			px.set_script(BossDeathParticles)
+			px.base_color = Color(1.0, 0.85, 0.2)
+			px.base_amount = 10
+			add_child(px)
+			px.global_position = pickup.global_position
+			pickup.queue_free()
+
+func _finish_boss_spawn(boss: Node) -> void:
+	boss.set_physics_process(true)
+	boss.set_process(true)
 	var hud_layer := CanvasLayer.new()
 	hud_layer.layer = 20
 	get_tree().root.add_child(hud_layer)
@@ -443,13 +557,77 @@ func spawn_boss() -> void:
 	bar.set_script(BossHealthBarScript)
 	hud_layer.add_child(bar)
 	bar.setup(boss)
-
 	var arrow_layer := CanvasLayer.new()
 	arrow_layer.layer = 20
 	get_tree().root.add_child(arrow_layer)
 	var arrow := BossArrowScene.instantiate()
 	arrow_layer.add_child(arrow)
 	arrow.setup(boss)
+
+func _process(_delta: float) -> void:
+	if not _horde_active or _boss_triggered:
+		return
+	var kills: int = get_node("/root/GameState").kills - _horde_start_kills
+	if kills == _horde_kills:
+		return
+	_horde_kills = kills
+	if is_instance_valid(_horde_bar):
+		_horde_bar.update_kills(mini(_horde_kills, HORDE_KILLS_NEEDED))
+	if _horde_kills >= HORDE_KILLS_NEEDED:
+		_horde_active = false
+		if is_instance_valid(_horde_bar):
+			var tween := _horde_bar.create_tween()
+			tween.tween_property(_horde_bar, "modulate:a", 0.0, 0.5)
+			tween.tween_callback(_horde_bar.get_parent().queue_free)
+		_spawn_boss_launch_banner()
+		get_tree().create_timer(1.5).timeout.connect(spawn_boss, CONNECT_ONE_SHOT)
+
+func start_horde() -> void:
+	if _boss_triggered:
+		return
+	_horde_active = true
+	_horde_start_kills = get_node("/root/GameState").kills
+	_horde_kills = 0
+
+	for i in HORDE_SPAWN_COUNT:
+		var angle := float(i) / float(HORDE_SPAWN_COUNT) * TAU + randf() * 0.4
+		var dist := randf_range(220.0, 340.0)
+		var origin: Vector2 = player.global_position + Vector2.from_angle(angle) * dist
+		origin.x = clampf(origin.x, -MAP_BOUNDS.x, MAP_BOUNDS.x)
+		origin.y = clampf(origin.y, -MAP_BOUNDS.y, MAP_BOUNDS.y)
+		var horde_enemy := spawn_enemy(origin, false, -1, 1.2)
+		horde_enemy.is_horde = true
+		var fx := CPUParticles2D.new()
+		fx.set_script(HordeSpawnParticles)
+		add_child(fx)
+		fx.global_position = origin
+
+	var bar_layer := CanvasLayer.new()
+	bar_layer.layer = 21
+	get_tree().root.add_child(bar_layer)
+	_horde_bar = Control.new()
+	_horde_bar.set_script(HordeBarScript)
+	_horde_bar.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bar_layer.add_child(_horde_bar)
+	_horde_bar.setup(HORDE_KILLS_NEEDED)
+
+func _spawn_boss_launch_banner() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 15
+	get_tree().root.add_child(layer)
+	var lbl := Label.new()
+	lbl.text = "BOSS SPAWNED!"
+	lbl.add_theme_font_override("font", FONT_BOSS)
+	lbl.add_theme_font_size_override("font_size", 22)
+	lbl.add_theme_color_override("font_color", Color(1.0, 0.15, 0.15))
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(lbl)
+	var tween := lbl.create_tween()
+	tween.tween_interval(1.5)
+	tween.tween_property(lbl, "modulate:a", 0.0, 0.8)
+	tween.tween_callback(layer.queue_free)
 
 ## Pops all enemies and pickups with explosion particles to clear the arena for the boss.
 func _clear_battlefield() -> void:
@@ -489,7 +667,7 @@ func _on_boss_defeated() -> void:
 		state.just_unlocked_map = ""
 	var next := "res://scenes/map_selection.tscn" if is_new_unlock else "res://scenes/stats_screen.tscn"
 	_spawn_boss_defeated_banner()
-	get_tree().create_timer(2.8).timeout.connect(
+	get_tree().create_timer(2.0).timeout.connect(
 		func(): get_tree().change_scene_to_file(next), CONNECT_ONE_SHOT
 	)
 

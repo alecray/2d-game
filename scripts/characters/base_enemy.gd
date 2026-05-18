@@ -55,6 +55,7 @@ var _player: Node2D         # cached at spawn — avoids tree search every frame
 var _sep_offset: int = 0    # stagger so enemies don't all recalculate separation on the same frame
 var _cached_separation: Vector2 = Vector2.ZERO
 var spell_drop_id: String = ""  # spell scroll this enemy can drop; set in subclass _ready()
+var is_horde := false           # set true by main.gd when spawned as part of a horde wave
 
 const KNOCKBACK_FRICTION = 14.0
 const ATTACK_DURATION = 0.7     # default seconds locked in melee animation (override via _get_attack_duration)
@@ -158,12 +159,21 @@ func _physics_process(delta: float) -> void:
 	velocity = direction * current_speed + _get_separation() + _get_player_avoidance() + knockback_velocity
 	knockback_velocity = knockback_velocity.lerp(Vector2.ZERO, delta * KNOCKBACK_FRICTION)
 	move_and_slide()
+	if is_horde:
+		_break_walls(delta)
 
 	if direction.x != 0:
 		$AnimatedSprite2D.flip_h = _flip_facing != (direction.x < 0)
 
 	var anim := "Walk" if velocity.length() > 5.0 else "Idle"
 	_play_anim(_pick_anim(anim))
+
+func _break_walls(delta: float) -> void:
+	for i in get_slide_collision_count():
+		var col := get_slide_collision(i)
+		var collider := col.get_collider()
+		if is_instance_valid(collider) and collider.is_in_group("breakable_wall"):
+			collider.take_damage(int(80.0 * delta), col.get_normal())
 
 ## Returns a push vector that keeps this enemy from occupying the same space as the player.
 func _get_player_avoidance() -> Vector2:

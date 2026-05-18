@@ -139,6 +139,7 @@ func get_death_color() -> Color:
 
 func die() -> void:
 	get_node("/root/GameState").kills += 1
+	get_node("/root/PlayerStats").add_xp(BOSS_XP_REWARD)
 
 	var xp_label = FloatingTextBoss.new()
 	xp_label.text = "+" + str(BOSS_XP_REWARD) + " XP"
@@ -148,14 +149,55 @@ func die() -> void:
 	xp_label.fade_duration = 0.4
 	get_parent().add_child(xp_label)
 	xp_label.global_position = global_position
-	get_node("/root/PlayerStats").add_xp(BOSS_XP_REWARD)
 
-	var particles = CPUParticles2D.new()
-	particles.set_script(EnemyDeathParticlesBoss)
-	particles.base_color = get_death_color()
-	particles.base_amount = 200
-	get_parent().add_child(particles)
-	particles.global_position = global_position
+	set_physics_process(false)
+	set_process(false)
+	_play_death_sequence()
 
+func _play_death_sequence() -> void:
+	var camera := get_viewport().get_camera_2d() if get_viewport() else null
+	if camera:
+		_death_shake(camera)
+
+	_burst(global_position, 100, get_death_color())
+
+	# Play the Death sprite animation — disable loop so animation_finished fires
+	$AnimatedSprite2D.sprite_frames.set_animation_loop("Death", false)
+	$AnimatedSprite2D.play("Death")
+	$AnimatedSprite2D.animation_finished.connect(_on_death_anim_finished, CONNECT_ONE_SHOT)
+
+	# Staggered particle bursts during the animation
+	var seq := create_tween()
+	seq.tween_interval(0.35)
+	seq.tween_callback(func() -> void:
+		_burst(global_position + Vector2(randf_range(-28.0, 28.0), randf_range(-28.0, 28.0)), 80, Color(1.0, 0.45, 0.0))
+	)
+	seq.tween_interval(0.35)
+	seq.tween_callback(func() -> void:
+		_burst(global_position + Vector2(randf_range(-28.0, 28.0), randf_range(-28.0, 28.0)), 80, get_death_color())
+		if camera:
+			_death_shake(camera)
+	)
+
+func _on_death_anim_finished() -> void:
+	_burst(global_position, 220, get_death_color())
 	boss_died.emit()
 	queue_free.call_deferred()
+
+func _burst(pos: Vector2, amount: int, color: Color) -> void:
+	var p := CPUParticles2D.new()
+	p.set_script(EnemyDeathParticlesBoss)
+	p.base_color = color
+	p.base_amount = amount
+	get_parent().add_child(p)
+	p.global_position = pos
+
+func _death_shake(camera: Camera2D) -> void:
+	var shake := create_tween()
+	var steps := 16
+	var total  := 1.0
+	for i in steps:
+		var intensity := 20.0 * (1.0 - float(i) / steps * 0.5)
+		var offset := Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)).normalized() * intensity
+		shake.tween_property(camera, "offset", offset, total / steps)
+	shake.tween_property(camera, "offset", Vector2.ZERO, total / steps)

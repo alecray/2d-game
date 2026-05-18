@@ -37,8 +37,8 @@ func _on_body_entered(body: Node2D) -> void:
 	if not body.is_in_group("player"):
 		return
 	if force_single_pickup:
-		_spawn_boss_banner()
-		get_tree().call_group_flags(SceneTree.GROUP_CALL_DEFERRED, "main_scene", "spawn_boss")
+		_spawn_horde_banner()
+		get_tree().call_group_flags(SceneTree.GROUP_CALL_DEFERRED, "main_scene", "start_horde")
 		queue_free()
 		return
 	var state := get_node("/root/GameState")
@@ -46,8 +46,8 @@ func _on_body_entered(body: Node2D) -> void:
 	_spawn_pickup_popup(state.boss_tokens)
 	if state.boss_tokens >= TOKENS_TO_SPAWN:
 		state.boss_tokens = 0
-		_spawn_boss_banner()
-		get_tree().call_group_flags(SceneTree.GROUP_CALL_DEFERRED, "main_scene", "spawn_boss")
+		_spawn_horde_banner()
+		get_tree().call_group_flags(SceneTree.GROUP_CALL_DEFERRED, "main_scene", "start_horde")
 	queue_free()
 
 func _spawn_pickup_popup(count: int) -> void:
@@ -67,15 +67,15 @@ func _spawn_pickup_popup(count: int) -> void:
 	tween.tween_callback(label.queue_free).set_delay(1.0)
 
 
-func _spawn_boss_banner() -> void:
+func _spawn_horde_banner() -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 15
 	get_tree().root.add_child(layer)
 	var lbl := Label.new()
-	lbl.text = "BOSS SPAWNED!"
+	lbl.text = "HORDE INCOMING!"
 	lbl.add_theme_font_override("font", FONT)
 	lbl.add_theme_font_size_override("font_size", 22)
-	lbl.add_theme_color_override("font_color", Color(1.0, 0.15, 0.15))
+	lbl.add_theme_color_override("font_color", Color(1.0, 0.45, 0.0))
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

@@ -34,7 +34,8 @@ const AIM_TURN_SPEED = 10.0  # radians per second the aim direction can rotate
 const TILT_AMOUNT = 0.13     # max lean angle in radians (~7.5 degrees)
 const WORLD_BOUNDS = Vector2(1576, 1440)  # half-extents of the background sprite
 
-const MagicWave = preload("res://scripts/characters/magic_wave.gd")
+const MagicWave    = preload("res://scripts/characters/magic_wave.gd")
+const SpiderSummon = preload("res://scripts/characters/spider_summon.gd")
 
 var active_spell: String = "magic_wave"
 const GroundShadow = preload("res://scripts/effects/ground_shadow.gd")
@@ -264,6 +265,10 @@ func _cast_spell() -> void:
 			var wave = MagicWave.new()
 			add_sibling(wave)
 			wave.global_position = global_position
+		"frost_nova":
+			var summon := SpiderSummon.new()
+			add_sibling(summon)
+			summon.global_position = global_position
 	mana -= MAGIC_COST
 	magic_used.emit(MAGIC_COST)
 

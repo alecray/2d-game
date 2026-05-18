@@ -11,6 +11,7 @@ const EXPLOSION_RADIUS = 80.0
 const HOMING_STRENGTH = 2.5  # lerp factor toward target per second
 
 const HitParticles = preload("res://scripts/effects/hit_particles.gd")
+const GroundShadow = preload("res://scripts/effects/ground_shadow.gd")
 
 var direction = Vector2.ZERO
 var lifetime = LIFETIME
@@ -34,6 +35,13 @@ func _ready() -> void:
 	var mat = CanvasItemMaterial.new()
 	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	material = mat
+	var shadow := Node2D.new()
+	shadow.set_script(GroundShadow)
+	shadow.position = Vector2(0.0, 16.0)
+	shadow.scale = Vector2(0.44, 0.18)
+	shadow.modulate = Color(0.0, 0.0, 0.0, 0.22)
+	shadow.z_index = -1
+	add_child(shadow)
 
 func _physics_process(delta: float) -> void:
 	if homing:

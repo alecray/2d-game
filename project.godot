@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="2d game"
-config/version="0.1.12"
+config/version="0.1.13"
 run/main_scene="res://scenes/title_screen.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
 boot_splash/bg_color=Color(0.55634874, 0.44034684, 0.13231027, 1)

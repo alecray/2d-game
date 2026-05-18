@@ -85,7 +85,10 @@ func _process(delta: float) -> void:
 		return
 
 	_elapsed_time += delta
-	_mat.set_shader_parameter("player_world_pos", _player.global_position)
+	var _vp := get_viewport()
+	var _cam := _vp.get_camera_2d() if _vp else null
+	var _cam_center := _player.global_position + (_cam.offset if _cam else Vector2.ZERO)
+	_mat.set_shader_parameter("player_world_pos", _cam_center)
 	_mat.set_shader_parameter("time",             _elapsed_time)
 
 	if _first_tick or _player.global_position.distance_to(_last_pos) >= SAMPLE_DIST:
@@ -214,6 +217,20 @@ func _build_minimap() -> void:
 
 func set_fog_color(color: Color) -> void:
 	_mat.set_shader_parameter("fog_color", color)
+
+func reveal_area(world_pos: Vector2, radius: float) -> void:
+	var cell_radius := int(ceil(radius / CELL_SIZE))
+	var center := _world_to_cell(world_pos)
+	for dy in range(-cell_radius, cell_radius + 1):
+		for dx in range(-cell_radius, cell_radius + 1):
+			if dx * dx + dy * dy > cell_radius * cell_radius:
+				continue
+			var cx := center.x + dx
+			var cy := center.y + dy
+			if cx < 0 or cx >= _cols or cy < 0 or cy >= _rows:
+				continue
+			_fog_img.set_pixel(cx, cy, Color.WHITE)
+	_fog_tex.update(_fog_img)
 
 func _process_minimap_dot() -> void:
 	if _mm_dot and _player and is_instance_valid(_player):
