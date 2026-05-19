@@ -58,20 +58,23 @@ var spell_drop_id: String = ""  # spell scroll this enemy can drop; set in subcl
 var is_horde := false           # set true by main.gd when spawned as part of a horde wave
 var frozen := false             # set true by shatter spell; stops all movement
 
+const WORLD_BOUNDS := Vector2(1576.0, 1440.0)
 const KNOCKBACK_FRICTION = 14.0
 const ATTACK_DURATION = 0.7     # default seconds locked in melee animation (override via _get_attack_duration)
 const ATTACK_COOLDOWN = 0.4     # extra seconds after the animation before it can attack again
 const ATTACK_HIT_WINDOW_FRAC = 0.35  # fraction of attack duration where contact damage is active (tail end)
-const PLAYER_AVOIDANCE_RADIUS = 24.0  # enemies won't try to occupy this space around the player
-const PLAYER_AVOIDANCE_FORCE = 150.0
+const PLAYER_AVOIDANCE_RADIUS = 32.0  # enemies won't try to occupy this space around the player
+const PLAYER_AVOIDANCE_FORCE = 260.0
 
 func _ready() -> void:
 	_player = get_tree().get_first_node_in_group("player")
 	_sep_offset = randi() % 5
 	current_speed = SPEED
 	health = max_health
-	collision_layer = 4  # enemy body on layer 3
-	collision_mask = 5   # collide with walls (layer 1) and other enemies (layer 3)
+	collision_layer = 4  # layer 3 (bitmask value 4) — enemy body
+	# mask 7 = binary 111: wall (layer 1) + player (layer 2) + enemy (layer 3)
+	# Player layer keeps enemies from running on top of each other AND the player.
+	collision_mask = 7
 
 	# stagger wander timers so enemies don't all turn at the same moment
 	time_until_change = randf_range(0.5, CHANGE_DIRECTION_TIME)
@@ -130,6 +133,7 @@ func _physics_process(delta: float) -> void:
 		if direction.x != 0:
 			$AnimatedSprite2D.flip_h = _flip_facing != (direction.x < 0)
 		move_and_slide()
+		_clamp_to_world()
 		return
 
 	# === MELEE TRIGGER: commit to attack before moving this frame ===
@@ -144,16 +148,21 @@ func _physics_process(delta: float) -> void:
 		_attack_cooldown = dur + ATTACK_COOLDOWN
 		velocity = Vector2.ZERO
 		move_and_slide()
+		_clamp_to_world()
 		_play_anim("Melee")
 		return
 
 	# === NORMAL AI MOVEMENT ===
-	var in_range = player and global_position.distance_to(player.global_position) <= DETECTION_RANGE
+	var dist_to_player := global_position.distance_to(player.global_position) if player else INF
+	var in_range = player and dist_to_player <= DETECTION_RANGE
 	if player and (in_range or rage_timer > 0):
-		# chase the player; double speed while enraged from a recent hit
 		direction = (player.global_position - global_position).normalized()
-		var target_speed = CHASE_SPEED * (RAGE_SPEED_MULTIPLIER if rage_timer > 0 else 1.0)
-		current_speed = move_toward(current_speed, target_speed, ACCELERATION * delta)
+		if dist_to_player < PLAYER_AVOIDANCE_RADIUS:
+			# inside avoidance zone — stop chasing so the avoidance force can push cleanly
+			current_speed = 0.0
+		else:
+			var target_speed = CHASE_SPEED * (RAGE_SPEED_MULTIPLIER if rage_timer > 0 else 1.0)
+			current_speed = move_toward(current_speed, target_speed, ACCELERATION * delta)
 	else:
 		current_speed = move_toward(current_speed, 0.0, ACCELERATION * delta)
 
@@ -164,6 +173,7 @@ func _physics_process(delta: float) -> void:
 	velocity = direction * current_speed + _get_separation() + _get_player_avoidance() + knockback_velocity
 	knockback_velocity = knockback_velocity.lerp(Vector2.ZERO, delta * KNOCKBACK_FRICTION)
 	move_and_slide()
+	_clamp_to_world()
 	if is_horde:
 		_break_walls(delta)
 
@@ -194,6 +204,8 @@ func _get_player_avoidance() -> Vector2:
 ## Returns a push vector that nudges this enemy away from any overlapping enemies.
 ## The force scales with how deeply they overlap — zero at the edge of the radius, max at full overlap.
 func _get_separation() -> Vector2:
+	# Only recalculate every 5 physics frames, staggered by _sep_offset so all
+	# enemies don't recalculate on the same frame. Returns the cached result otherwise.
 	if Engine.get_physics_frames() % 5 != _sep_offset:
 		return _cached_separation
 	var push = Vector2.ZERO
@@ -216,6 +228,18 @@ func _play_anim(anim: String) -> void:
 		anim = "Idle" if frames.has_animation("Idle") else "default"
 	if $AnimatedSprite2D.animation != anim:
 		$AnimatedSprite2D.play(anim)
+
+func _clamp_to_world() -> void:
+	var hit_x := absf(global_position.x) > WORLD_BOUNDS.x
+	var hit_y := absf(global_position.y) > WORLD_BOUNDS.y
+	global_position.x = clampf(global_position.x, -WORLD_BOUNDS.x, WORLD_BOUNDS.x)
+	global_position.y = clampf(global_position.y, -WORLD_BOUNDS.y, WORLD_BOUNDS.y)
+	if hit_x:
+		direction.x = -signf(global_position.x)
+	if hit_y:
+		direction.y = -signf(global_position.y)
+	if hit_x or hit_y:
+		direction = direction.normalized()
 
 func pick_random_direction() -> void:
 	direction = Vector2.from_angle(randf() * TAU)
@@ -243,8 +267,11 @@ func take_damage(amount: int) -> void:
 ## Draws a health bar above the sprite — only visible after the enemy has taken damage.
 func _draw() -> void:
 	if aura_color.a > 0.0:
+		# Four concentric rings, each dimmer and wider than the last.
+		# sin oscillates between -1..1; *0.35 + 0.65 keeps pulse in 0.30..1.00 range.
 		var pulse = sin(_aura_time * 3.0) * 0.35 + 0.65
 		for i in 4:
+			# Inner rings are fully opaque; outer rings fade out proportionally.
 			var ring_alpha = (1.0 - float(i) / 4.0) * pulse * 0.7
 			var ring_radius = 18.0 + float(i) * 8.0
 			draw_circle(Vector2.ZERO, ring_radius, Color(aura_color.r, aura_color.g, aura_color.b, ring_alpha))
@@ -347,6 +374,7 @@ func _drop_loot() -> void:
 		get_parent().call_deferred("add_child", scroll)
 		return
 
+	# Weighted single-roll: accumulate thresholds so only one item can drop per kill.
 	var r := randf()
 	var accum := 0.0
 	accum += HEALTH_DROP_CHANCE

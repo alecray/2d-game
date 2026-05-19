@@ -1,6 +1,98 @@
-[gd_scene format=4]
+[gd_scene format=3 uid="uid://3da33ng7ee0s"]
 
-[ext_resource type="Script" path="res://scripts/ui/title_screen.gd" id="1_ts"]
+[ext_resource type="Script" uid="uid://bf0kweisfacfv" path="res://scripts/ui/title_screen.gd" id="1_ts"]
+[ext_resource type="FontFile" uid="uid://d1ajy0i3e10af" path="res://assets/fonts/PressStart2P-Regular.ttf" id="2_font"]
+[ext_resource type="Texture2D" uid="uid://dls4407dpeyk6" path="res://assets/sprites/weapons/gun5.png" id="3_gun"]
 
-[node name="TitleScreen" type="Node2D"]
+[node name="TitleScreen" type="Node2D" unique_id=5052610]
 script = ExtResource("1_ts")
+
+[node name="AtmosphereLayer" type="CanvasLayer" parent="." unique_id=111111111]
+
+[node name="LightCone" type="Polygon2D" parent="AtmosphereLayer" unique_id=222222222]
+color = Color(1, 1, 1, 0.032)
+polygon = PackedVector2Array(780, -10, 960, -10, 1290, 730, 450, 730)
+
+[node name="LightCore" type="Polygon2D" parent="AtmosphereLayer" unique_id=333333333]
+color = Color(1, 1, 1, 0.028)
+polygon = PackedVector2Array(840, -10, 900, -10, 990, 730, 750, 730)
+
+[node name="GunLayer" type="CanvasLayer" parent="." unique_id=444444444]
+layer = 2
+
+[node name="Gun" type="Sprite2D" parent="GunLayer" unique_id=666666666]
+modulate = Color(0.9, 0.94, 1, 1)
+texture_filter = 1
+position = Vector2(870, 360)
+rotation = -0.558505
+scale = Vector2(11.25, 11.25)
+texture = ExtResource("3_gun")
+
+[node name="UILayer" type="CanvasLayer" parent="." unique_id=2144544277]
+layer = 10
+
+[node name="TitleLabel" type="Label" parent="UILayer" unique_id=1976654871]
+offset_left = 60.0
+offset_top = 90.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0.25, 0.5, 1, 0.65)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 4
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 24
+text = "UNTITLED"
+
+[node name="SubLabel" type="Label" parent="UILayer" unique_id=192984957]
+offset_left = 62.0
+offset_top = 130.0
+theme_override_colors/font_color = Color(0.55, 0.65, 0.85, 0.6)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 8
+text = "bullet heaven dungeon crawler"
+
+[node name="BtnPlay" type="Button" parent="UILayer" unique_id=556633690]
+custom_minimum_size = Vector2(340, 56)
+offset_top = 250.0
+offset_right = 340.0
+offset_bottom = 306.0
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 14
+text = "PLAY"
+
+[node name="BtnQuit" type="Button" parent="UILayer" unique_id=1828512658]
+custom_minimum_size = Vector2(340, 56)
+offset_top = 318.0
+offset_right = 340.0
+offset_bottom = 374.0
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 14
+text = "QUIT"
+
+[node name="CreditLabel" type="Label" parent="UILayer" unique_id=46536549]
+offset_left = 18.0
+offset_top = 698.0
+theme_override_colors/font_color = Color(1, 1, 1, 0.28)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 8
+text = "An Alec Ray Game"
+
+[node name="VersionLabel" type="Label" parent="UILayer" unique_id=1196154989]
+offset_left = 1207.0
+offset_top = 703.0
+offset_right = 1263.0
+offset_bottom = 710.0
+theme_override_colors/font_color = Color(1, 1, 1, 0.28)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 7
+text = "vx.xx.xx"
+
+[node name="DevResetBtn" type="Button" parent="UILayer" unique_id=539724168]
+offset_left = 1148.0
+offset_top = 681.0
+offset_right = 1264.0
+offset_bottom = 695.0
+theme_override_colors/font_color = Color(0.85, 0.5, 0.15, 0.7)
+theme_override_colors/font_hover_color = Color(1, 0.65, 0.2, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 6
+text = "[ DEV ] RESET SAVE"

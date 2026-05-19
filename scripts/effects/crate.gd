@@ -2,6 +2,7 @@ extends Area2D
 
 const UPGRADE_SCREEN_SCENE = preload("res://prefabs/ui/upgrade_screen.tscn")
 const FONT = preload("res://assets/fonts/PressStart2P-Regular.ttf")
+const POPUP_FONT_SIZE = 14
 
 const BAD_CRATE_CHANCE = 0.2
 
@@ -44,7 +45,8 @@ func _process(delta: float) -> void:
 	$Sprite2D.position.y = bob
 	$Sprite2D.rotation = tilt
 
-	# shadow creeps down and shrinks as the crate rises
+	# Normalise bob into 0..1 (0 = top of arc, 1 = bottom) so the shadow can
+	# grow and darken when the crate is low and shrink/fade when it's high.
 	var bob_t := (bob + BOB_AMPLITUDE) / (BOB_AMPLITUDE * 2.0)
 	_shadow.position = Vector2(0.0, 16.0 - bob * 0.25)
 	_shadow.scale.x = lerp(0.65, 0.85, bob_t)
@@ -83,7 +85,7 @@ func _spawn_curse_popup(pos: Vector2, curse: Dictionary) -> void:
 	var label := Label.new()
 	label.text = curse.name + "!\n" + curse.desc
 	label.add_theme_font_override("font", FONT)
-	label.add_theme_font_size_override("font_size", 9)
+	label.add_theme_font_size_override("font_size", POPUP_FONT_SIZE)
 	label.add_theme_color_override("font_color", Color(1.0, 0.15, 0.15, 1.0))
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.z_index = 10

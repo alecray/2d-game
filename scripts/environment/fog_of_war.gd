@@ -6,9 +6,11 @@ const FOG_SHADER := preload("res://assets/shaders/fog_of_war.gdshader")
 # computed from the maze world size in setup().
 const CELL_SIZE    := 8.0
 const LOS_RAYS     := 180    # angular rays for LOS — more = smoother fog boundary
-const VIEW_RANGE   := 400.0  # world-px radius revealed around the player
+const VIEW_RANGE   := 580.0  # world-px radius revealed around the player
 const SAMPLE_DIST  := 16.0   # world-px movement before re-running LOS
-const FADE_SPEED        := 1.0   # reveal alpha units per second (1/FADE_SPEED = fade duration)
+const FADE_SPEED        := 16.0  # reveal alpha units per second (1/FADE_SPEED = fade duration)
+const DECAY_SPEED       := 0.07  # fog re-cover rate (units/sec) — ~9 s to reach floor
+const FOG_FLOOR         := 0.35  # minimum visibility after decay (stays partially revealed)
 const ENEMY_FADE_SPEED  := 6.0   # how fast enemies fade in/out at fog boundary
 
 # Minimap
@@ -32,7 +34,9 @@ var _rows   : int
 var _last_pos              := Vector2(1e9, 1e9)
 var _first_tick            := true
 var _visibility_initialized := false
-var _pending               : Dictionary = {}   # Vector2i cell → float alpha (0..1)
+var _pending               : Dictionary = {}   # Vector2i → float alpha (0..1): cells currently fading in
+var _revealed_set          : Dictionary = {}   # Vector2i → true: all cells above FOG_FLOOR (eligible for decay)
+var _current_los           : Dictionary = {}   # Vector2i → true: cells inside the player's view this tick
 var _fog_vis_accum         : float = 0.0       # accumulated delta for throttled visibility updates
 
 ## Must be called before add_child() so _ready() has valid origin/size.
@@ -97,11 +101,15 @@ func _process(delta: float) -> void:
 		_last_pos = _player.global_position
 		_update_los()
 
-	_advance_pending(delta)
+	var fog_dirty := _advance_pending(delta)
+	fog_dirty = _advance_decay(delta) or fog_dirty
+	if fog_dirty:
+		_fog_tex.update(_fog_img)
 	_update_fog_visibility(delta)
 	_process_minimap_dot()
 
 func _update_los() -> void:
+	_current_los.clear()
 	var space : PhysicsDirectSpaceState2D = _player.get_world_2d().direct_space_state
 	var from  := _player.global_position
 	var excl  := [_player.get_rid()]
@@ -109,8 +117,10 @@ func _update_los() -> void:
 	# Always reveal the cell directly under the player
 	var pc := _world_to_cell(from)
 	if pc.x >= 0 and pc.x < _cols and pc.y >= 0 and pc.y < _rows:
+		_current_los[pc] = true
 		if _fog_img.get_pixel(pc.x, pc.y).r < 1.0 and not (pc in _pending):
 			_pending[pc] = 0.0
+			_revealed_set[pc] = true
 
 	# Cast LOS_RAYS evenly-spaced angular rays. For each ray, march cell-by-cell
 	# along the ray and reveal every cell until a wall blocks the path.
@@ -137,14 +147,16 @@ func _update_los() -> void:
 			var cell := _world_to_cell(wp)
 			if cell.x < 0 or cell.x >= _cols or cell.y < 0 or cell.y >= _rows:
 				break
+			_current_los[cell] = true
 			if _fog_img.get_pixel(cell.x, cell.y).r >= 1.0:
 				continue  # already fully revealed — skip
 			if not (cell in _pending):
 				_pending[cell] = 0.0
+				_revealed_set[cell] = true
 
-func _advance_pending(delta: float) -> void:
+func _advance_pending(delta: float) -> bool:
 	if _pending.is_empty():
-		return
+		return false
 	var done : Array = []
 	for cell : Vector2i in _pending:
 		var val : float = minf(_pending[cell] + delta * FADE_SPEED, 1.0)
@@ -154,7 +166,29 @@ func _advance_pending(delta: float) -> void:
 			done.append(cell)
 	for cell : Vector2i in done:
 		_pending.erase(cell)
-	_fog_tex.update(_fog_img)
+	return true
+
+func _advance_decay(delta: float) -> bool:
+	if _revealed_set.is_empty():
+		return false
+	# Walk every revealed cell. Skip those still in LOS or actively fading in.
+	# Once a cell decays to FOG_FLOOR it's removed from the set — it will be
+	# re-added naturally if the player looks at it again (via _update_los).
+	var dirty := false
+	var done : Array = []
+	for cell : Vector2i in _revealed_set:
+		if cell in _current_los or cell in _pending:
+			continue
+		var val := _fog_img.get_pixel(cell.x, cell.y).r
+		if val <= FOG_FLOOR:
+			done.append(cell)
+			continue
+		val = maxf(val - delta * DECAY_SPEED, FOG_FLOOR)
+		_fog_img.set_pixel(cell.x, cell.y, Color(val, val, val))
+		dirty = true
+	for cell in done:
+		_revealed_set.erase(cell)
+	return dirty
 
 func _update_fog_visibility(delta: float) -> void:
 	var snap := not _visibility_initialized
@@ -196,11 +230,24 @@ func _build_minimap() -> void:
 	_mm_layer.add_child(mm)
 
 	var bg := ColorRect.new()
-	bg.color = Color(0.06, 0.06, 0.10, 0.90)
+	var map_col : Color = get_node("/root/GameState").map_bg_color
+	bg.color = map_col.darkened(0.82)
+	bg.color.a = 0.90
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	mm.add_child(bg)
 
+	# Static floor/wall color layer — floor = map-themed color, walls = dark stone
+	var color_tex := TextureRect.new()
+	color_tex.texture        = _build_wall_texture()
+	color_tex.stretch_mode   = TextureRect.STRETCH_SCALE
+	color_tex.expand_mode    = TextureRect.EXPAND_IGNORE_SIZE
+	color_tex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	color_tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	color_tex.mouse_filter   = Control.MOUSE_FILTER_IGNORE
+	mm.add_child(color_tex)
+
+	# Fog mask on top with multiply blend: white=reveal color layer, black=hide it
 	var map_tex := TextureRect.new()
 	map_tex.texture        = _fog_tex
 	map_tex.stretch_mode   = TextureRect.STRETCH_SCALE
@@ -208,6 +255,9 @@ func _build_minimap() -> void:
 	map_tex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	map_tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	map_tex.mouse_filter   = Control.MOUSE_FILTER_IGNORE
+	var fog_mat := CanvasItemMaterial.new()
+	fog_mat.blend_mode = CanvasItemMaterial.BLEND_MODE_MUL
+	map_tex.material = fog_mat
 	mm.add_child(map_tex)
 
 	_mm_dot = ColorRect.new()
@@ -215,6 +265,31 @@ func _build_minimap() -> void:
 	_mm_dot.size         = Vector2(4.0, 4.0)
 	_mm_dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	mm.add_child(_mm_dot)
+
+func _build_wall_texture() -> ImageTexture:
+	var state := get_node("/root/GameState")
+	var palette : Array = state.map_leaf_palette
+	var leaf : Color = palette[palette.size() >> 1] if palette.size() > 0 else Color(0.2, 0.6, 0.15)
+	var floor_col := Color.from_hsv(leaf.h, 0.75, 0.85)
+	var wall_col  := Color(0.22, 0.18, 0.14)
+
+	var img := Image.create(_cols, _rows, false, Image.FORMAT_RGB8)
+	img.fill(floor_col)
+
+	for wall in get_tree().get_nodes_in_group("destructible_wall"):
+		if not is_instance_valid(wall):
+			continue
+		var ws : Vector2 = wall.size if "size" in wall else Vector2(32.0, 32.0)
+		var tl : Vector2 = wall.global_position - ws * 0.5
+		var cx0 := clampi(int((tl.x - _origin.x) / CELL_SIZE), 0, _cols - 1)
+		var cy0 := clampi(int((tl.y - _origin.y) / CELL_SIZE), 0, _rows - 1)
+		var cx1 := clampi(int(ceil((tl.x + ws.x - _origin.x) / CELL_SIZE)), 0, _cols - 1)
+		var cy1 := clampi(int(ceil((tl.y + ws.y - _origin.y) / CELL_SIZE)), 0, _rows - 1)
+		for cy in range(cy0, cy1 + 1):
+			for cx in range(cx0, cx1 + 1):
+				img.set_pixel(cx, cy, wall_col)
+
+	return ImageTexture.create_from_image(img)
 
 func set_fog_color(color: Color) -> void:
 	_mat.set_shader_parameter("fog_color", color)
@@ -230,7 +305,9 @@ func reveal_area(world_pos: Vector2, radius: float) -> void:
 			var cy := center.y + dy
 			if cx < 0 or cx >= _cols or cy < 0 or cy >= _rows:
 				continue
+			var cell := Vector2i(cx, cy)
 			_fog_img.set_pixel(cx, cy, Color.WHITE)
+			_revealed_set[cell] = true
 	_fog_tex.update(_fog_img)
 
 func _process_minimap_dot() -> void:

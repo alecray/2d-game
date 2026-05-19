@@ -1,34 +1,60 @@
 extends Node2D
 
-const FONT        := preload("res://assets/fonts/PressStart2P-Regular.ttf")
-const GUN_TEXTURE := preload("res://assets/sprites/weapons/gun5.png")
-
-const SCREEN_W := 1280.0
-const SCREEN_H := 720.0
-
-# Gun display constants
-const GUN_TARGET_W   := 720.0
-const GUN_CENTER_X   := 870.0
-const GUN_CENTER_Y   := 360.0
-const GUN_ROTATION   := -32.0
-
-# Menu
-const MENU_LABELS := ["PLAY", "QUIT"]
-const MENU_START_Y := 250.0
-const MENU_ITEM_H  := 68.0
-
 var _selected    := -1
 var _navigating  := false
 var _btns: Array  = []
 var _reset_armed := false
-var _reset_btn: Button = null
+
+@onready var _title_label  : Label      = $UILayer/TitleLabel
+@onready var _btn_play     : Button     = $UILayer/BtnPlay
+@onready var _btn_quit     : Button     = $UILayer/BtnQuit
+@onready var _ver_label    : Label      = $UILayer/VersionLabel
+@onready var _reset_btn    : Button     = $UILayer/DevResetBtn
+@onready var _gun          : Sprite2D   = $GunLayer/Gun
+@onready var _atmo_layer   : CanvasLayer = $AtmosphereLayer
 
 func _ready() -> void:
 	RenderingServer.set_default_clear_color(Color.BLACK)
-	_build_atmosphere()
-	_build_gun()
-	_build_ui()
+	_setup_ui()
+	_start_gun_float()
+	_spawn_title_particles()
 	_fade_in()
+
+func _setup_ui() -> void:
+	_title_label.text = ProjectSettings.get_setting("application/config/name", "2D GAME").to_upper()
+
+	var ver_str: String = ProjectSettings.get_setting("application/config/version", "")
+	if not ver_str.is_empty():
+		_ver_label.text = "v" + ver_str
+	else:
+		_ver_label.visible = false
+
+	_btns = [_btn_play, _btn_quit]
+	for i in _btns.size():
+		var idx := i
+		var btn : Button = _btns[i]
+		btn.mouse_entered.connect(func():
+			if not _navigating:
+				_selected = idx
+				_refresh_buttons()
+		)
+		btn.mouse_exited.connect(func():
+			if not _navigating and _selected == idx:
+				_selected = -1
+				_refresh_buttons()
+		)
+		btn.pressed.connect(func():
+			if not _navigating:
+				_selected = idx
+				_animate_click(btn, idx)
+		)
+	_refresh_buttons()
+
+	var flat := StyleBoxFlat.new()
+	flat.bg_color = Color(0, 0, 0, 0)
+	for sn in ["normal", "hover", "pressed", "focus"]:
+		_reset_btn.add_theme_stylebox_override(sn, flat)
+	_reset_btn.pressed.connect(_on_dev_reset_pressed)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _navigating:
@@ -47,9 +73,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _move_selection(dir: int) -> void:
 	if _selected < 0:
-		_selected = 0 if dir > 0 else MENU_LABELS.size() - 1
+		_selected = 0 if dir > 0 else _btns.size() - 1
 	else:
-		_selected = (_selected + dir + MENU_LABELS.size()) % MENU_LABELS.size()
+		_selected = (_selected + dir + _btns.size()) % _btns.size()
 	_refresh_buttons()
 
 func _refresh_buttons() -> void:
@@ -59,130 +85,6 @@ func _refresh_buttons() -> void:
 func _confirm() -> void:
 	var idx := maxi(_selected, 0)
 	_animate_click(_btns[idx], idx)
-
-# ── Atmosphere ────────────────────────────────────────────────────────────────
-
-func _build_atmosphere() -> void:
-	var layer := CanvasLayer.new()
-	layer.layer = 1
-	add_child(layer)
-
-	# Wide diffuse cone
-	var cone := Polygon2D.new()
-	cone.polygon = PackedVector2Array([
-		Vector2(GUN_CENTER_X - 90, -10),
-		Vector2(GUN_CENTER_X + 90, -10),
-		Vector2(GUN_CENTER_X + 420, SCREEN_H + 10),
-		Vector2(GUN_CENTER_X - 420, SCREEN_H + 10),
-	])
-	cone.color = Color(1.0, 1.0, 1.0, 0.032)
-	layer.add_child(cone)
-
-	# Tight bright core
-	var core := Polygon2D.new()
-	core.polygon = PackedVector2Array([
-		Vector2(GUN_CENTER_X - 30, -10),
-		Vector2(GUN_CENTER_X + 30, -10),
-		Vector2(GUN_CENTER_X + 120, SCREEN_H + 10),
-		Vector2(GUN_CENTER_X - 120, SCREEN_H + 10),
-	])
-	core.color = Color(1.0, 1.0, 1.0, 0.028)
-	layer.add_child(core)
-
-# ── Gun ───────────────────────────────────────────────────────────────────────
-
-func _build_gun() -> void:
-	var layer := CanvasLayer.new()
-	layer.layer = 2
-	add_child(layer)
-
-	# Diffuse glow halo behind gun
-	var halo := ColorRect.new()
-	halo.color = Color(0.18, 0.38, 1.0, 0.09)
-	halo.size = Vector2(660, 420)
-	halo.position = Vector2(GUN_CENTER_X - 330, GUN_CENTER_Y - 210)
-	layer.add_child(halo)
-
-	# Gun sprite — scaled up with nearest-neighbour for crisp pixels
-	var sf := GUN_TARGET_W / GUN_TEXTURE.get_size().x
-	var gun := Sprite2D.new()
-	gun.texture = GUN_TEXTURE
-	gun.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	gun.scale = Vector2(sf, sf)
-	gun.rotation_degrees = GUN_ROTATION
-	gun.position = Vector2(GUN_CENTER_X, GUN_CENTER_Y)
-	gun.modulate = Color(0.90, 0.94, 1.0)
-	layer.add_child(gun)
-
-	# Floor glow — subtle surface reflection
-	var floor_glow := ColorRect.new()
-	floor_glow.color = Color(0.12, 0.25, 0.70, 0.14)
-	floor_glow.size = Vector2(720, 90)
-	floor_glow.position = Vector2(GUN_CENTER_X - 360, GUN_CENTER_Y + 210)
-	layer.add_child(floor_glow)
-
-# ── UI ────────────────────────────────────────────────────────────────────────
-
-func _build_ui() -> void:
-	var layer := CanvasLayer.new()
-	layer.layer = 10
-	add_child(layer)
-	_add_title(layer)
-	_add_menu(layer)
-	_add_credit(layer)
-	_add_dev_reset(layer)
-
-func _add_title(parent: Node) -> void:
-	var lbl := Label.new()
-	lbl.text = ProjectSettings.get_setting("application/config/name", "2D GAME").to_upper()
-	lbl.add_theme_font_override("font", FONT)
-	lbl.add_theme_font_size_override("font_size", 24)
-	lbl.add_theme_color_override("font_color", Color.WHITE)
-	lbl.add_theme_color_override("font_shadow_color", Color(0.25, 0.50, 1.0, 0.65))
-	lbl.add_theme_constant_override("shadow_offset_x", 0)
-	lbl.add_theme_constant_override("shadow_offset_y", 4)
-	lbl.position = Vector2(60.0, 90.0)
-	parent.add_child(lbl)
-
-	var sub := Label.new()
-	sub.text = "a top-down survivor"
-	sub.add_theme_font_override("font", FONT)
-	sub.add_theme_font_size_override("font_size", 8)
-	sub.add_theme_color_override("font_color", Color(0.55, 0.65, 0.85, 0.60))
-	sub.position = Vector2(62.0, 130.0)
-	parent.add_child(sub)
-
-func _add_menu(parent: Node) -> void:
-	for i in MENU_LABELS.size():
-		var btn := _make_btn(MENU_LABELS[i], i)
-		btn.position = Vector2(0.0, MENU_START_Y + i * MENU_ITEM_H)
-		parent.add_child(btn)
-		_btns.append(btn)
-	_refresh_buttons()
-
-func _make_btn(label_text: String, idx: int) -> Button:
-	var btn := Button.new()
-	btn.text = label_text
-	btn.add_theme_font_override("font", FONT)
-	btn.add_theme_font_size_override("font_size", 14)
-	btn.custom_minimum_size = Vector2(340.0, 56.0)
-	btn.size = Vector2(340.0, 56.0)
-	btn.mouse_entered.connect(func():
-		if not _navigating:
-			_selected = idx
-			_refresh_buttons()
-	)
-	btn.mouse_exited.connect(func():
-		if not _navigating and _selected == idx:
-			_selected = -1
-			_refresh_buttons()
-	)
-	btn.pressed.connect(func():
-		if not _navigating:
-			_selected = idx
-			_animate_click(btn, idx)
-	)
-	return btn
 
 func _animate_click(btn: Button, idx: int) -> void:
 	if _navigating:
@@ -194,12 +96,10 @@ func _animate_click(btn: Button, idx: int) -> void:
 	btn.pivot_offset = btn.size * 0.5
 
 	var tw := btn.create_tween()
-	# Squish down
 	tw.tween_property(btn, "scale", Vector2(1.10, 0.82), 0.07).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tw.set_parallel(true)
 	tw.tween_property(btn, "modulate", Color(2.0, 2.0, 2.0, 1.0), 0.07)
 	tw.set_parallel(false)
-	# Spring back
 	tw.tween_property(btn, "scale", Vector2(1.0, 1.0), 0.18).set_trans(Tween.TRANS_SPRING).set_ease(Tween.EASE_OUT)
 	tw.set_parallel(true)
 	tw.tween_property(btn, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.14)
@@ -239,26 +139,66 @@ func _style_btn(btn: Button, active: bool) -> void:
 	for col_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 		btn.add_theme_color_override(col_name, col)
 
-func _add_credit(parent: Node) -> void:
-	var credit := Label.new()
-	credit.text = "An Alec Ray Game"
-	credit.add_theme_font_override("font", FONT)
-	credit.add_theme_font_size_override("font_size", 8)
-	credit.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.28))
-	credit.position = Vector2(18.0, SCREEN_H - 22.0)
-	parent.add_child(credit)
+func _start_gun_float() -> void:
+	var base_y := _gun.position.y
+	var tw := _gun.create_tween().set_loops()
+	tw.tween_property(_gun, "position:y", base_y - 12.0, 2.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(_gun, "position:y", base_y + 12.0, 2.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
-	var ver_str: String = ProjectSettings.get_setting("application/config/version", "")
-	if not ver_str.is_empty():
-		var ver := Label.new()
-		ver.text = "v" + ver_str
-		ver.add_theme_font_override("font", FONT)
-		ver.add_theme_font_size_override("font_size", 7)
-		ver.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.28))
-		ver.position = Vector2(SCREEN_W - 110.0, SCREEN_H - 22.0)
-		parent.add_child(ver)
+func _spawn_title_particles() -> void:
+	var p := CPUParticles2D.new()
+	p.amount = 55
+	p.lifetime = 10.0
+	p.preprocess = 10.0
+	p.randomness = 0.5
 
-# ── Transitions ───────────────────────────────────────────────────────────────
+	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	p.emission_rect_extents = Vector2(640, 360)
+	p.position = Vector2(640, 360)
+
+	p.direction = Vector2(1.0, 0.0)
+	p.spread = 22.0
+	p.gravity = Vector2(0.0, 0.0)
+	p.initial_velocity_min = 8.0
+	p.initial_velocity_max = 28.0
+
+	p.scale_amount_min = 3.5
+	p.scale_amount_max = 10.0
+	p.scale_amount_curve = _make_particle_scale_curve()
+
+	var init_grad := Gradient.new()
+	init_grad.colors = PackedColorArray([
+		Color(0.70, 0.85, 1.00, 1.0),
+		Color(0.55, 0.72, 1.00, 1.0),
+		Color(0.90, 0.96, 1.00, 1.0),
+		Color(0.65, 0.80, 1.00, 1.0),
+	])
+	p.color_initial_ramp = init_grad
+
+	var life_grad := Gradient.new()
+	life_grad.colors = PackedColorArray([
+		Color(1.0, 1.0, 1.0, 0.0),
+		Color(1.0, 1.0, 1.0, 0.45),
+		Color(1.0, 1.0, 1.0, 0.45),
+		Color(1.0, 1.0, 1.0, 0.0),
+	])
+	life_grad.offsets = PackedFloat32Array([0.0, 0.12, 0.78, 1.0])
+	p.color_ramp = life_grad
+
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	p.material = mat
+
+	p.z_index = 3
+	_atmo_layer.add_child(p)
+
+func _make_particle_scale_curve() -> Curve:
+	var c := Curve.new()
+	c.add_point(Vector2(0.0, 0.0))
+	c.add_point(Vector2(0.08, 1.0))
+	c.add_point(Vector2(0.88, 1.0))
+	c.add_point(Vector2(1.0, 0.0))
+	return c
 
 func _fade_in() -> void:
 	var fade_layer := CanvasLayer.new()
@@ -286,24 +226,6 @@ func _do_play() -> void:
 	tween.tween_callback(func(): get_tree().change_scene_to_file("res://scenes/map_selection.tscn"))
 	tween.tween_property(black, "modulate:a", 0.0, 0.45).set_trans(Tween.TRANS_QUAD)
 	tween.tween_callback(fade_layer.queue_free)
-
-func _do_quit() -> void:
-	get_tree().quit()
-
-func _add_dev_reset(parent: Node) -> void:
-	_reset_btn = Button.new()
-	_reset_btn.text = "[ DEV ] RESET SAVE"
-	_reset_btn.add_theme_font_override("font", FONT)
-	_reset_btn.add_theme_font_size_override("font_size", 6)
-	_reset_btn.add_theme_color_override("font_color",       Color(0.85, 0.50, 0.15, 0.70))
-	_reset_btn.add_theme_color_override("font_hover_color", Color(1.00, 0.65, 0.20, 1.00))
-	var flat := StyleBoxFlat.new()
-	flat.bg_color = Color(0, 0, 0, 0)
-	for sn in ["normal", "hover", "pressed", "focus"]:
-		_reset_btn.add_theme_stylebox_override(sn, flat)
-	_reset_btn.position = Vector2(SCREEN_W - 220.0, SCREEN_H - 24.0)
-	_reset_btn.pressed.connect(_on_dev_reset_pressed)
-	parent.add_child(_reset_btn)
 
 func _on_dev_reset_pressed() -> void:
 	if not _reset_armed:

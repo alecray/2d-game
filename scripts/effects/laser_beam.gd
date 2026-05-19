@@ -90,7 +90,7 @@ func _update_beam() -> void:
 	query.collide_with_areas = false
 	query.exclude = exclude_rids
 	var result := space.intersect_ray(query)
-	_hitting_wall = not result.is_empty() and not result.collider.is_in_group("enemy")
+	_hitting_wall = not result.is_empty() and not result.collider.is_in_group("enemy") and not result.collider.is_in_group("boss")
 	if _hitting_wall:
 		_beam_end = result.position
 		_wall_collider = result.collider as StaticBody2D
@@ -139,7 +139,7 @@ func _apply_effects(delta: float, dmg: int) -> void:
 		_wall_collider.take_damage(dmg)
 	var from := global_position
 	var beam_length: float = from.distance_to(_beam_end)
-	for enemy in get_tree().get_nodes_in_group("enemy"):
+	for enemy in get_tree().get_nodes_in_group("enemy") + get_tree().get_nodes_in_group("boss"):
 		var to_enemy: Vector2 = enemy.global_position - from
 		var along: float = to_enemy.dot(direction)
 		if along < 0.0 or along > beam_length:

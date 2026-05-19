@@ -160,6 +160,8 @@ func _physics_process(delta: float) -> void:
 
 func _update_aim(delta: float) -> void:
 	var target = (_world_mouse_position() - global_position).normalized()
+	# angle_difference returns the shortest signed arc between two angles,
+	# wrapping correctly across the ±π boundary. Clamping it rate-limits the aim.
 	var diff = angle_difference(aim_direction.angle(), target.angle())
 	var max_turn = AIM_TURN_SPEED * delta
 	aim_direction = Vector2.from_angle(aim_direction.angle() + clampf(diff, -max_turn, max_turn))
@@ -211,6 +213,8 @@ func _handle_movement(delta: float) -> void:
 	var target_tilt: float = input_direction.x * TILT_AMOUNT
 	$AnimatedSprite2D_Player.rotation = lerpf($AnimatedSprite2D_Player.rotation, target_tilt, delta * 12.0)
 
+	# Normalise the sprite's vertical offset into 0..1 so the shadow can
+	# shrink and darken as the player "rises" higher off the ground.
 	var bob_t = clampf(($AnimatedSprite2D_Player.position.y + IDLE_AMPLITUDE) / (BOB_AMPLITUDE + IDLE_AMPLITUDE), 0.0, 1.0)
 	_shadow.scale.x = lerpf(0.9, 1.1, bob_t)
 	_shadow.modulate.a = lerpf(SHADOW_BASE_ALPHA, SHADOW_BOB_ALPHA, bob_t)
@@ -327,17 +331,18 @@ func _toss_gun() -> void:
 	var peak := Vector2(0.0, -10.0)
 	var land := Vector2(0.0, 10.0)
 
-	# Quick pop to the peak
+	# Three independent tweens run simultaneously during the death animation:
+	# pos_tw: initial pop upward; drift_tw: slow continued float; spin_tw: spinning.
+	# drift_tw and spin_tw are killed when the death animation finishes so the
+	# gun can then play the "drop and bounce" landing sequence.
 	var pos_tw := _gun.create_tween()
 	pos_tw.tween_property(_gun, "position", peak, 0.30) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
-	# Slow upward drift after the pop — killed when animation_finished fires
 	var drift_tw := _gun.create_tween()
 	drift_tw.tween_property(_gun, "position", Vector2(0.0, -28.0), 8.0) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 
-	# Fast spin — killed when animation_finished fires
 	var spin_tw := _gun.create_tween()
 	spin_tw.tween_property(_gun, "rotation", _gun.rotation + TAU * 20.0, 3.5) \
 		.set_trans(Tween.TRANS_LINEAR)
@@ -463,6 +468,8 @@ func shoot_bullet() -> void:
 		var bullet = BULLET_SCENE.instantiate()
 		bullet.direction = fire_dir
 		var gun_tip := _gun.global_transform * GUN_TIP_LOCAL
+		# If the gun tip is inside a wall, spawn the bullet at the wall surface
+		# instead of inside it — prevents bullets from immediately hitting the wall.
 		var wall_query := PhysicsRayQueryParameters2D.create(global_position, gun_tip)
 		wall_query.exclude = [get_rid()]
 		wall_query.collide_with_areas = false
@@ -470,6 +477,7 @@ func shoot_bullet() -> void:
 		bullet.global_position = wall_hit.position - fire_dir * 2.0 if wall_hit and wall_hit.collider is StaticBody2D else gun_tip
 		bullet.damage = bullet_damage
 		bullet.speed = bullet.SPEED * bullet_speed_multiplier
+		# Inherit player velocity so bullets fired while strafing don't curve sideways.
 		var combined: Vector2 = fire_dir * bullet.speed + velocity
 		bullet.speed = combined.length()
 		bullet.direction = combined.normalized()

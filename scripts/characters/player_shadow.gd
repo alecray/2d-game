@@ -1,19 +1,14 @@
 extends Node2D
 
-const LAYERS = 5
-const STEPS = 24
-
 func _draw() -> void:
-	for i in LAYERS:
-		var t = float(i) / (LAYERS - 1)  # 0 = outermost, 1 = innermost
-		draw_colored_polygon(
-			_ellipse_pts(lerpf(20.0, 10.0, t), lerpf(7.0, 3.5, t)),
-			Color(0.0, 0.0, 0.0, lerpf(0.0, 0.38, t))
-		)
+	draw_colored_polygon(
+		_ellipse_pts(20.0, 7.0, 8),
+		Color(0.0, 0.0, 0.0, 0.38)
+	)
 
-func _ellipse_pts(w: float, h: float) -> PackedVector2Array:
-	var pts = PackedVector2Array()
-	for i in STEPS:
-		var a = float(i) / STEPS * TAU
+func _ellipse_pts(w: float, h: float, steps: int) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for i in steps:
+		var a := float(i) / steps * TAU
 		pts.append(Vector2(cos(a) * w, sin(a) * h))
 	return pts

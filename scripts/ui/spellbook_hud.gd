@@ -1,7 +1,6 @@
-extends CanvasLayer
+extends Control
 
 const SPELLBOOK_TEX   := preload("res://assets/sprites/spellbook.png")
-const FONT            := preload("res://assets/fonts/PressStart2P-Regular.ttf")
 const SpellbookScreen := preload("res://scripts/ui/spellbook_screen.gd")
 
 var _player: Node
@@ -11,7 +10,8 @@ func setup(player: Node) -> void:
 	_player = player
 
 func _ready() -> void:
-	layer = 20
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	_btn = TextureButton.new()
 	_btn.texture_normal = SPELLBOOK_TEX
@@ -24,6 +24,7 @@ func _ready() -> void:
 	_btn.grow_horizontal = Control.GROW_DIRECTION_END
 	_btn.position = Vector2(12, 12)
 	_btn.pivot_offset = Vector2(18, 18)
+	_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 	_btn.pressed.connect(_on_pressed)
 	add_child(_btn)
 

@@ -183,7 +183,7 @@ z_index = 10
 script = ExtResource("2_sugp2")
 
 [node name="Gun" type="Sprite2D" parent="CharacterBody2D_Player" unique_id=583920471]
-z_index = -1
+z_index = 1
 texture_filter = 3
 texture = ExtResource("2_gun")
 offset = Vector2(8, 0)

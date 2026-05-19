@@ -24,6 +24,8 @@ var piercing = false        # Penetrator: pass through enemies
 var explosive = false       # Volatile: AOE damage on hit
 var homing = false          # Seeker: curve toward nearest enemy
 var bullet_color = Color.WHITE  # set by the player; gun types will override this
+# Dictionary used as a set — keyed by enemy node reference so piercing bullets
+# can't hit the same enemy twice and explosion splash can't double-count.
 var _hit_enemies: Dictionary = {}
 var _homing_target: Node = null
 var _homing_refresh: float = 0.0
@@ -55,11 +57,12 @@ func _physics_process(delta: float) -> void:
 
 	var motion = direction * speed * delta
 
-	# raycast ahead to detect walls before moving
+	# Raycast the full frame's movement before moving to catch thin walls the Area2D
+	# might tunnel through at high speed. area_entered still handles enemy hits.
 	var space = get_world_2d().direct_space_state
 	var query = PhysicsRayQueryParameters2D.create(global_position, global_position + motion)
 	query.exclude = [get_rid()]
-	query.collide_with_areas = false  # ignore Area2D hitboxes — those are handled by area_entered
+	query.collide_with_areas = false  # enemy hitboxes are Area2D; skip them here
 	var result = space.intersect_ray(query)
 
 	if result and result.collider is StaticBody2D:
@@ -80,6 +83,7 @@ func _physics_process(delta: float) -> void:
 	if lifetime < FADE_START:
 		modulate.a = lifetime / FADE_START
 
+	# distance_squared avoids a sqrt; MAX_RANGE_SQ is pre-squared at declaration.
 	if lifetime <= 0 or global_position.distance_squared_to(_spawn) > MAX_RANGE_SQ:
 		queue_free.call_deferred()
 
@@ -104,6 +108,7 @@ func _on_area_entered(area: Area2D) -> void:
 			queue_free.call_deferred()
 
 func _explode() -> void:
+	# Splash deals half damage; minimum 1 so no hit is ever silent.
 	for enemy in get_tree().get_nodes_in_group("enemy"):
 		if enemy in _hit_enemies:
 			continue

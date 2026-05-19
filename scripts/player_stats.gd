@@ -63,7 +63,8 @@ func _ready() -> void:
 func get_level(stat: String) -> int:
 	return levels.get(stat, 0)
 
-## XP cost to go from current level to the next.  Scales as base_cost * 1.8^level.
+## XP cost to go from current level to the next.  Scales as base_cost × 1.8^level —
+## exponential so early levels are cheap and later levels become very expensive.
 func upgrade_cost(stat: String) -> int:
 	return int(STAT_DEFS[stat]["base_cost"] * pow(1.8, get_level(stat)))
 

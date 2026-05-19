@@ -152,7 +152,7 @@ func _spawn_crates() -> void:
 	for r in MAZE_ROWS:
 		for c in MAZE_COLS:
 			var center := org + Vector2((c * G + G * 0.5) * WALL_UNIT, (r * G + G * 0.5) * WALL_UNIT)
-			if center.length() <= 200.0:
+			if center.length() >= 96.0 and center.length() <= 200.0:
 				near_cells.append(center)
 			else:
 				far_cells.append(center)
@@ -193,10 +193,10 @@ func _spawn_pedestal() -> void:
 	pedestal.global_position = pos
 
 func _spawn_spellbook_hud() -> void:
-	var hud := CanvasLayer.new()
+	var hud := Control.new()
 	hud.set_script(SpellbookHUD)
 	hud.setup(player)
-	add_child(hud)
+	$HUDLayer.add_child(hud)
 
 func _spawn_fog() -> void:
 	var G      := MAZE_CELL + 1
@@ -218,6 +218,10 @@ func _setup_lighting() -> void:
 ## Recursive-backtracker DFS maze.  Returns two 2-D bool arrays:
 ##   "right"[r][c] — passage open between cell (r,c) and (r, c+1)
 ##   "down" [r][c] — passage open between cell (r,c) and (r+1, c)
+## Algorithm: push a random start cell, then repeatedly pick an unvisited
+## neighbour, carve the wall between them, and push the neighbour.  When no
+## unvisited neighbours remain, backtrack (pop) until one is found.
+## Result: a perfect maze (every cell reachable, no loops) before the ruin pass.
 func _generate_maze_passages(rows: int, cols: int) -> Dictionary:
 	var right: Array = []   # rows × (cols-1)
 	var down:  Array = []   # (rows-1) × cols
@@ -282,7 +286,9 @@ func spawn_maze() -> void:
 	var cols    := MAZE_COLS
 	var cell    := MAZE_CELL   # corridor width in tiles
 	var wall    := 1           # wall thickness in tiles
-	var G       := cell + wall # grid unit in tiles (= 4)
+	# G is the repeating unit: one corridor + one wall segment.
+	# Every cell occupies a G×G block in tile space; walls sit in the 1-tile gap between blocks.
+	var G       := cell + wall # grid unit in tiles
 	var u       := WALL_UNIT   # px per tile (= 32)
 
 	var passages := _generate_maze_passages(rows, cols)
@@ -395,6 +401,8 @@ func _spawn_initial_enemies() -> void:
 func _pick_enemy_scene() -> PackedScene:
 	if _spawn_table.is_empty():
 		return SPIDER_SCENE
+	# Weighted random: pick a random point in [0, total_weight) then walk the
+	# table accumulating weights until we pass the roll — that entry wins.
 	var total := 0.0
 	for entry in _spawn_table:
 		total += entry["weight"]
@@ -439,6 +447,8 @@ func spawn_boss() -> void:
 	if not scene:
 		return
 	var boss = scene.instantiate()
+	# Place boss just outside the visible screen so it dramatically enters during the cinematic.
+	# half_screen accounts for camera zoom; +80 px guarantees it starts offscreen.
 	var vp := get_viewport()
 	var zoom := vp.get_camera_2d().zoom.x if vp and vp.get_camera_2d() else 1.0
 	var half_screen := (vp.get_visible_rect().size if vp else Vector2(680, 440)) / (2.0 * zoom)
@@ -689,10 +699,14 @@ func _spawn_boss_defeated_banner() -> void:
 	tween.tween_property(lbl, "modulate:a", 0.0, 0.8)
 	tween.tween_callback(layer.queue_free)
 
-## Generates grass using blue noise algorithm for natural distribution
+## Generates grass using Poisson disk sampling (blue-noise) so blades are
+## evenly spread with no clumping. Each candidate point must be at least
+## min_distance from all existing points.  Uses a background grid of
+## cell_size = min_distance/√2 for O(1) neighbour lookups.
 func spawn_grass_in_area(count: int, area_size: Vector2, area_offset: Vector2) -> void:
 
 	var min_distance = 100.0
+	# Grid cell diagonal equals min_distance, so each cell holds at most one point.
 	var cell_size = min_distance / sqrt(2.0)
 	var grid: Dictionary = {}
 	var active_list: Array = []

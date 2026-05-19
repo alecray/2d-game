@@ -48,7 +48,6 @@ func _on_body_entered(body: Node2D) -> void:
 	var popup := FloatingText.new()
 	popup.text = "+" + str(gained) + " ammo"
 	popup.add_theme_color_override("font_color", Color(1.0, 0.9, 0.2, 1.0))
-	popup.add_theme_font_size_override("font_size", 8)
 	get_parent().add_child(popup)
 	popup.global_position = global_position
 

@@ -101,6 +101,8 @@ func _physics_process(delta: float) -> void:
 
 func _shoot_spread(aim: Vector2) -> void:
 	_ranged_anim_timer = 0.7
+	# half centres the spread symmetrically around the aim direction.
+	# e.g. SPREAD_COUNT=3 → bullets at -SPREAD_ANGLE, 0, +SPREAD_ANGLE.
 	var half = (SPREAD_COUNT - 1) / 2.0
 	for i in SPREAD_COUNT:
 		var angle = (i - half) * SPREAD_ANGLE
@@ -111,8 +113,12 @@ func _shoot_spread(aim: Vector2) -> void:
 
 func _destroy_obstacle(collider: Node) -> void:
 	var is_tree := collider.is_in_group("destructible_tree")
+	# Remove from groups first so any in-flight queries don't find this node
+	# between group removal and queue_free.
 	collider.remove_from_group("destructible_wall")
 	collider.remove_from_group("destructible_tree")
+	# Disable collision shapes immediately so the boss doesn't keep colliding
+	# with a node that's about to be freed.
 	for child in collider.get_children():
 		if child is CollisionShape2D:
 			child.disabled = true

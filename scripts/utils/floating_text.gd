@@ -3,6 +3,7 @@
 extends Label
 
 const FONT = preload("res://assets/fonts/PressStart2P-Regular.ttf")
+const FONT_SIZE = 14
 
 var hold_duration = 1.0    # seconds to sit still before fading
 var fade_duration = 0.4    # seconds to fade out
@@ -11,6 +12,7 @@ var rise_duration = 0.25   # how long the rise takes (only used when rise_distan
 
 func _ready() -> void:
 	add_theme_font_override("font", FONT)
+	add_theme_font_size_override("font_size", FONT_SIZE)
 	z_index = 100
 	pivot_offset = size / 2
 	var tween = create_tween()

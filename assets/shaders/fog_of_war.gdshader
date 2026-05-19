@@ -53,10 +53,10 @@ void fragment() {
 
 		if (edge_prox > 0.0) {
 			vec2 world_shift = vec2(
-				sin(world_pos.x * 0.028 + world_pos.y * 0.013 + time * 1.1)
-					* cos(world_pos.y * 0.019 + time * 0.7),
-				cos(world_pos.y * 0.026 + world_pos.x * 0.017 + time * 0.9)
-					* sin(world_pos.x * 0.022 + time * 1.3)
+				sin(world_pos.x * 0.028 + world_pos.y * 0.013 + time * 0.5)
+					* cos(world_pos.y * 0.019 + time * 0.32),
+				cos(world_pos.y * 0.026 + world_pos.x * 0.017 + time * 0.42)
+					* sin(world_pos.x * 0.022 + time * 0.6)
 			) * 14.0 * edge_prox;
 			// Nearest-neighbour re-sample: the shift snaps to whole fog cells
 			vec2 shifted_uv = (world_pos + world_shift - maze_origin) / maze_size;
@@ -69,7 +69,7 @@ void fragment() {
 
 		// Density patches from precomputed noise texture — one cheap texture sample.
 		// UV drifts slowly so patches appear to roll through the fog.
-		vec2 noise_uv = world_pos * 0.0006 + vec2(time * 0.015, time * 0.010);
+		vec2 noise_uv = world_pos * 0.0006 + vec2(time * 0.006, time * 0.004);
 		float density = texture(fog_noise_tex, noise_uv).r;
 		alpha *= mix(0.65, 1.0, density);
 	}
